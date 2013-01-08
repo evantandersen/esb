@@ -103,7 +103,7 @@ int main(int argc, char** argv)
     
     while(1)
     {
-        struct sockaddr_in6 peerAddr;
+        struct sockaddr_in peerAddr;
         socklen_t len = sizeof(peerAddr);
         int newFD = accept(listenFD, (struct sockaddr*)&peerAddr, &len);
         if(newFD == -1)
@@ -116,8 +116,8 @@ int main(int argc, char** argv)
         }
         else if(verbose)
         {
-            char buf[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, &peerAddr, buf, len);
+            char buf[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &peerAddr, buf, len);
             printf("Recieved connection from %s\n", buf);
         }
         
