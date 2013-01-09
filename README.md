@@ -31,7 +31,7 @@ An output file will be created in the working directory named "latency.txt" that
 
 
 **Screenshots**
- - [Number of Keys vs Latency](http://i.imgur.com/fLnUe.png)
+ - [Number of Keys vs Memory Usage](http://i.imgur.com/YQoBY.png)
  - [Throughput vs Latency (With error bars)](http://i.imgur.com/LFR6c.png)
  - [Concurrent Clients vs Latency](http://i.imgur.com/fN86U.png)
 
