@@ -301,10 +301,9 @@ int beginSlavery(int fd)
                 
         //check the bare minimun parameters for a command
         if(!(json_is_string(json_object_get(nextCommand, "command")) &&
-             ((json_is_integer(json_object_get(nextCommand, "amount")) &&
+             json_is_integer(json_object_get(nextCommand, "amount")) &&
              json_is_integer(json_object_get(nextCommand, "num-clients")) &&
-            json_is_number(json_object_get(nextCommand, "throughput"))) ||
-             !strcmp(json_string_value(json_object_get(nextCommand, "command")), "quit"))))
+            json_is_number(json_object_get(nextCommand, "throughput"))))
         {
             returnCode = -1;
             goto exit;
