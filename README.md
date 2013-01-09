@@ -10,7 +10,8 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
 
 **Depedent Variables**
  - Reuqest Latency (mean / 95% confidence interval)
- - More to come
+ - Throughput
+ - Memory Usage
 
 **Requirements**
  - Master requires linux
@@ -35,8 +36,7 @@ An output file will be created in the working directory named "latency.txt" that
  - [Concurrent Clients vs Latency](http://i.imgur.com/fN86U.png)
 
 **Future Developments**
- - Measure CPU/Memory resource usage (SOON)
- - Measure total throughput (SOON)
+ - Measure CPU resource usage (SOON)
  - Measure network usage
  - Add more tests, such as repetitive add/remove cycles
  - Extend tester to support complex queries
