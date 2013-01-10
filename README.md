@@ -12,12 +12,12 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
  - Reuqest Latency (mean / 95% confidence interval)
  - Throughput
  - Memory Usage
+ - CPU Usage
 
 **Requirements**
  - Master requires linux
  - Slave supports Mac and Linux
  - [Jansson](http://www.digip.org/jansson/releases/jansson-2.4.tar.gz) (JSON Parser)
- - [Argtable](http://prdownloads.sourceforge.net/argtable/argtable2-13.tar.gz) (Argument Parsing)
 
 **How To Use**
 
@@ -27,16 +27,17 @@ To run the master, it is required that a copy of your server executable be place
 
 python esb_master.py [slave IP addresses]
 
-An output file will be created in the working directory named "latency.txt" that contains the results. It can easily be graphed with gnuplot. 
+Output files are created in the working directory, labelled by the dependent variable. They can easily be graphed with gnuplot. 
 
 
 **Screenshots**
  - [Number of Keys vs Memory Usage](http://i.imgur.com/YQoBY.png)
  - [Throughput vs Latency (With error bars)](http://i.imgur.com/LFR6c.png)
  - [Concurrent Clients vs Latency](http://i.imgur.com/fN86U.png)
+ - [Requested vs Actual Throughput](http://i.imgur.com/0mKWC.png)
+ - [Number of Keys vs CPU Utilization](http://i.imgur.com/F3EUo.png)
 
 **Future Developments**
- - Measure CPU resource usage (SOON)
  - Measure network usage
  - Add more tests, such as repetitive add/remove cycles
  - Extend tester to support complex queries
