@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include <argtable2.h>
 #include <stdint.h>
 #include <poll.h>
 #include <pthread.h>
@@ -20,10 +19,6 @@
 #include "network.h"
 #include "slave.h"
 
-int verbose;
-
-#define PROGRAM_VERSION "0.0.1"
-
 void ignore(int signal)
 {
     
@@ -32,21 +27,7 @@ void ignore(int signal)
 int main(int argc, char** argv)
 {
     srand((int)time(NULL));
-    
-    struct arg_lit *help = arg_lit0("h", "help", "print this help");
-    struct arg_int *port = arg_int0("p", "port","<n>", "Port used for communicating with master");
-    struct arg_lit *verb = arg_lit0("v", "verbose", "verbose output");
-    struct arg_end *end = arg_end(20);
-    void *argtable[] = {help, port, verb, end};
-    
-    int errors = arg_parse(argc, argv, argtable);
-    if(help->count == 1)
-    {
-        printf("\nECE297 Server Benchmark v"PROGRAM_VERSION" (Client)\n\nUsage:\n");
-        arg_print_glossary(stdout, argtable, "  %-30s %s\n");
-        printf("\n");
-        return 0;
-    }
+
     
     //increase open file count
     struct rlimit limit;
@@ -65,24 +46,7 @@ int main(int argc, char** argv)
         return -1;
     }    
         
-    if(errors > 0)
-    {
-        arg_print_errors(stderr, end, "esb");
-        return -1;
-    }
-    
-    verbose = verb->count;
-    
-    int portToUse = 4912;
-    if(port->count == 1)
-    {
-        portToUse = *port->ival;
-    }
-    
-    arg_freetable(argtable, sizeof(argtable)/sizeof(argtable[0]));
-
-    
-    int listenFD = createListenFD(portToUse);
+    int listenFD = createListenFD(4912);
     if(listenFD == -1)
     {
         return -1;
@@ -114,12 +78,9 @@ int main(int argc, char** argv)
             }
             continue;
         }
-        else if(verbose)
-        {
-            char buf[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &peerAddr, buf, len);
-            printf("Recieved connection from %s\n", buf);
-        }
+        char buf[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &peerAddr, buf, len);
+        printf("Recieved connection from %s\n", buf);
         
         //handle the slavery request (abe wouldn't like this)
         beginSlavery(newFD);

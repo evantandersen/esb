@@ -24,18 +24,12 @@ json_t* readCommand(int fd, int timeout)
         ssize_t result = recv(fd, sizeBuf, sizeof(sizeBuf) - 1, MSG_DONTWAIT);
         if(result == -1 && !(errno == EAGAIN || errno == EWOULDBLOCK))
         {
-            if(verbose)
-            {
-                perror("recv failed");
-            }
+            perror("recv failed");
             return NULL;
         }
         if(result == 0)
         {
-            if(verbose)
-            {
-                fprintf(stderr, "Remote hung up unexpectedly\n");
-            }
+            fprintf(stderr, "Remote hung up unexpectedly\n");
             return NULL;
         }
         if(result == (sizeof(sizeBuf) - 1))
@@ -44,10 +38,7 @@ json_t* readCommand(int fd, int timeout)
             expectedSize = atoi(sizeBuf);
             if(expectedSize > (sizeof(buf) -1) || expectedSize == 0)
             {
-                if(verbose)
-                {
-                    fprintf(stderr, "Packet with incorrect size recived (%d)\n", expectedSize);
-                }
+                fprintf(stderr, "Packet with incorrect size recived (%d)\n", expectedSize);
                 return NULL;
             }
             break;
@@ -68,18 +59,12 @@ json_t* readCommand(int fd, int timeout)
         ssize_t result = recv(fd, buf + amountRead, expectedSize - amountRead, MSG_DONTWAIT);
         if(result == -1 && !(errno == EAGAIN || errno == EWOULDBLOCK))
         {
-            if(verbose)
-            {
-                perror("recv failed");
-            }
+            perror("recv failed");
             return NULL;
         }
         if(result == 0)
         {
-            if(verbose)
-            {
-                fprintf(stderr, "Remote hung up unexpectedly\n");
-            }
+            fprintf(stderr, "Remote hung up unexpectedly\n");
             return NULL;
         }
         if(result > 0)
@@ -97,10 +82,9 @@ json_t* readCommand(int fd, int timeout)
         }
     }
     buf[expectedSize] = '\0';
-    printf("Parsing %s\n", buf);
     json_error_t err;
     json_t* root = json_loads(buf, 0, &err);
-    if(!root && verbose)
+    if(!root)
     {
         fprintf(stderr, "Error parsing JSON on Line %d: %s\n", err.line, err.text);
     }
@@ -386,10 +370,7 @@ int beginSlavery(int fd)
         }
         else
         {
-            if(verbose)
-            {
-                fprintf(stderr, "unknown command from client: %s\n", commandName);
-            }
+            fprintf(stderr, "unknown command from client: %s\n", commandName);
             returnCode = -1;
             goto exit;
         }
@@ -445,10 +426,7 @@ int beginSlavery(int fd)
         size_t len = strlen(serialResponse);
         if(len > 1048576)
         {
-            if(verbose)
-            {
-                fprintf(stderr, "Response too large (%zd)\n", len);
-            }
+            fprintf(stderr, "Response too large (%zd)\n", len);
             free(serialResponse);
             returnCode = -1;
             goto exit;

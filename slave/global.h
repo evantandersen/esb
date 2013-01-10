@@ -15,7 +15,6 @@
 #include <sys/time.h>
 #include "md5.h"
 
-extern int verbose;
 
 void* xmalloc(size_t size);
 void* xrealloc(void* pointer, size_t size);

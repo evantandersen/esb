@@ -9,6 +9,7 @@ import itertools
 from collections import defaultdict
 import os.path
 import mmap
+import sys
 
 def calculateStatistics(latencyDict):
     sortedData = [(k, latency[k]) for k in sorted(latency, key=int)]
@@ -33,12 +34,15 @@ def calculateStatistics(latencyDict):
         
     return {"mean":total/(float(count)*10.0), "low":float(low)/10, "high":float(high)/10}
 
+
 def splitNWays(count, n, i):
     return int(count/n) + ((count % n) > i)
+
 
 def createPacket(buffer):
     str = json.dumps(buffer)
     return "%08d%s" % (len(str), str)
+
 
 def dict_sum(a, b):
     d = defaultdict(int, a)
@@ -62,15 +66,42 @@ def readPacket(recvSocket):
             print "Client Error: %s" % error
         raise Exception('ClientError')
     return result
-            
+
+
+def getJiffies(pid):
+    stat = open("/proc/%d/stat" % pid, "r")
+    #kernel and user time
+    values = stat.readline().split()
+    result = int(values[13]) + int(values[14])
+    stat.close()
+    return result
+
+
+def getSystemJiffies():
+    stat = open("/proc/stat", "r")
+    line = stat.readline()
+    while line[:3] != "cpu":
+        line = stat.readline()
+    
+    jiffies = line.split()
+    total = 0
+    for value in jiffies[1:]:
+            total += int(value)
+    stat.close()
+    return total
+
+
 def getMemoryUsageOfPid(pid):
     memInfo = open("/proc/%d/statm" % pid, "r")
-    return (float((memInfo.readline().split()[1]))*mmap.PAGESIZE)/1048576
+    result = (float((memInfo.readline().split()[1]))*mmap.PAGESIZE)/1048576
+    memInfo.close()
+    return result
 
+
+#start of program execution
 parser = argparse.ArgumentParser()
 parser.add_argument("slaves", nargs='+', help="Address of slaves")
 parser.add_argument("--error-checking", help="Check the server's output", action="store_true")
-parser.add_argument("-p", "--port", help="Port used to communicate with slaves", type=int, default=4912)
 parser.add_argument("-k", "--keys", help="Specify the number of keys", type=int, default=8192)
 parser.add_argument("-c", "--clients", help="Specify the number of clients", type=int, default=64)
 parser.add_argument("-l", "--length", help="Specify the length of the values stored", type=int, default=64)
@@ -90,7 +121,10 @@ throughputFile = open(args.output_path + "throughput.txt", "w")
 throughputFile.write("# <x> <mean>\n")
 
 memoryFile = open(args.output_path + "memory.txt", "w")
-memoryFile.write("#<x> <memory usage (MB)>\n")
+memoryFile.write("# <x> <memory usage (MB)>\n")
+
+cpuFile = open(args.output_path + "cpu.txt", "w")
+cpuFile.write("# <x> <cpu utilization>\n")
 
 #find our local IP
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -105,11 +139,10 @@ config.close()
 
 #start the server
 process = subprocess.Popen([args.server_file_path, "esb-test.config"])
+print "Server spawned on pid: %d" % process.pid
 
 #kill the server when we exit
 atexit.register(process.terminate)
-
-print "Server spawned on pid: %d" % process.pid
 
 #give the server time to setup
 time.sleep(0.5)
@@ -119,7 +152,7 @@ numSlaves = 0
 slaves = []
 for slave in args.slaves:
     newSocket = socket.socket()
-    newSocket.connect((slave, args.port))
+    newSocket.connect((slave, 4912))
     slaves.append(newSocket)
     numSlaves += 1
 
@@ -153,7 +186,7 @@ if args.independent_variable == 'k':
 if args.independent_variable == 't':
     dataPointCount = min(args.throughput, args.num_datapoints)
 
-print "starting tests"
+percentDone = 0
 
 ivar = 0
 for i in xrange(1, dataPointCount + 1):
@@ -185,7 +218,9 @@ for i in xrange(1, dataPointCount + 1):
 
     #start a timer for throughput
     start = time.time()
-
+    startSysJiffies = getSystemJiffies()
+    startServJiffies = getJiffies(process.pid)
+    
     j = 0
     for slave in slaves:
         command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"workload":[0.8],"throughput":throughput}
@@ -200,18 +235,31 @@ for i in xrange(1, dataPointCount + 1):
 
     #calculate the latency mean and confidence interval
     stats = calculateStatistics(latency)
-    latencyFile.write("%d, %f, %f, %f\n" % (i*(args.throughput/dataPointCount), stats["mean"], stats["low"], stats["high"]))
+    latencyFile.write("%d, %f, %f, %f\n" % (ivar, stats["mean"], stats["low"], stats["high"]))
 
     #calculate the throughput
     throughput = (amount * numSlaves)/(time.time() - start)
     throughputFile.write("%f, %f\n" % (ivar, (throughput * numSlaves)))
 
+    #CPU usage
+    cpuUsage = (getJiffies(process.pid) - startServJiffies)/float(getSystemJiffies() - startSysJiffies)
+    cpuFile.write("%f, %f\n" % (ivar, cpuUsage))
+
     #memory usage
     memoryFile.write("%f, %f\n" % (ivar, getMemoryUsageOfPid(process.pid)))
+
+    #if the % changed, print it
+    if int(i*100/dataPointCount) > percentDone:
+        percentDone = int(i*100/dataPointCount)
+        print "%d%%" % percentDone,
+        sys.stdout.flush()
+
 
 #done writing data
 latencyFile.close()
 throughputFile.close()
+memoryFile.close()
+cpuFile.close()
 
 #close the connections to the slaves
 for slave in slaves:

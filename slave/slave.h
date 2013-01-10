@@ -18,7 +18,7 @@
 #include "network.h"
 #include "tester.h"
 
-#define kNewConnectionsPerMs 128
+#define kNewConnectionsPerMs 8
 
 int beginSlavery(int fd);
 
