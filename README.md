@@ -42,4 +42,4 @@ Output files are created in the working directory, labelled by the dependent var
  - Add more tests, such as repetitive add/remove cycles
  - Extend tester to support complex queries
  - gnuplot scripts for automated graphing
-
+ - It would be a great addition to esb to have a windows port of the client, to increase the number of client nodes available
