@@ -10,6 +10,10 @@ from collections import defaultdict
 import os.path
 import mmap
 import sys
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plot
+import datetime
 
 def calculateStatistics(latencyDict):
     sortedData = [(k, latency[k]) for k in sorted(latency, key=int)]
@@ -34,6 +38,23 @@ def calculateStatistics(latencyDict):
         
     return {"mean":total/(float(count)*10.0), "low":float(low)/10, "high":float(high)/10}
 
+def plotData(path, x, y, xlabel, ylabel, xshort, yshort):
+    plot.plot(x, y)
+    plot.xlabel(xlabel)
+    plot.ylabel(ylabel)
+    x1,x2,y1,y2 = plot.axis()
+    plot.axis((0,x2,0,y2*1.25))
+    plot.savefig(os.path.join(path, "%s_vs_%s.png" % (yshort, xshort)))
+    plot.close()
+
+def writeDataToFile(path, x, y, xshort, yshort):
+    file = open(os.path.join(path, ("%s_vs_%s.txt" % (yshort, xshort))), "w")
+    file.write("# <%s> <%s>\n" % (xshort, yshort))
+    i = 0
+    for xData in x:
+        file.write("%f %f\n" % (xData, y[i]))
+        i += 1
+    file.close()
 
 def splitNWays(count, n, i):
     return int(count/n) + ((count % n) > i)
@@ -101,30 +122,18 @@ def getMemoryUsageOfPid(pid):
 #start of program execution
 parser = argparse.ArgumentParser()
 parser.add_argument("slaves", nargs='+', help="Address of slaves")
-parser.add_argument("--error-checking", help="Check the server's output", action="store_true")
 parser.add_argument("-k", "--keys", help="Specify the number of keys", type=int, default=8192)
 parser.add_argument("-c", "--clients", help="Specify the number of clients", type=int, default=64)
-parser.add_argument("-l", "--length", help="Specify the length of the values stored", type=int, default=64)
 parser.add_argument("-t", "--throughput", help="Specify the number of operations per second", type=int, default=1024)
-parser.add_argument("-n", "--num-datapoints", help="Specify the number of datapoints", type=int, default=64)
 parser.add_argument("-i", "--independent-variable", default='k', choices=['c', 'k', 't'])
+parser.add_argument("-l", "--length", help="Specify the length of the values stored", type=int, default=64)
+parser.add_argument("-n", "--num-datapoints", help="Specify the number of datapoints", type=int, default=64)
 parser.add_argument("-s", "--server-file-path", help="Filepath of server executable", default="server")
 parser.add_argument("-o", "--output-path", help="Output filepath", default="")
+parser.add_argument("--error-checking", help="Check the server's output", action="store_true")
+parser.add_argument("--raw-output", help="Save the raw data to files", action="store_true")
 
 args = parser.parse_args()
-
-#open the results files
-latencyFile = open(args.output_path + "latency.txt", "w")
-latencyFile.write("# <x> <mean> <low-error> <high-error>\n")
-
-throughputFile = open(args.output_path + "throughput.txt", "w")
-throughputFile.write("# <x> <mean>\n")
-
-memoryFile = open(args.output_path + "memory.txt", "w")
-memoryFile.write("# <x> <memory usage (MB)>\n")
-
-cpuFile = open(args.output_path + "cpu.txt", "w")
-cpuFile.write("# <x> <cpu utilization>\n")
 
 #find our local IP
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -177,23 +186,39 @@ if args.independent_variable == 'c' or args.independent_variable == 't':
 #run the tests
 dataPointCount = 0
 
+ivar_filename = ''
+ivar_title = ''
+
 if args.independent_variable == 'c':
     dataPointCount = min(args.clients, args.num_datapoints)
+    ivar_filename = "clients"
+    ivar_title = "Concurrent Clients"
 
 if args.independent_variable == 'k':
     dataPointCount = min(args.keys, args.num_datapoints)
+    ivar_filename = "keys"
+    ivar_title = "Number of Keys"
 
 if args.independent_variable == 't':
     dataPointCount = min(args.throughput, args.num_datapoints)
+    ivar_filename = "IOPs"
+    ivar_title = "Requested Throughput (IOPs/s)"
 
 percentDone = 0
 
-ivar = 0
+ivar = []
+latencyResults = []
+memoryResults = []
+throughputResults = []
+cpuResults = []
+
+temp = 0
 for i in xrange(1, dataPointCount + 1):
 
     if args.independent_variable == 'k':
         numKeys = splitNWays(args.keys, dataPointCount, i)
-        ivar += numKeys
+        temp += numKeys
+        ivar.append(temp)
         
         j = 0
         for slave in slaves:
@@ -207,12 +232,12 @@ for i in xrange(1, dataPointCount + 1):
     numClients = args.clients
     if args.independent_variable == 'c':
         numClients = (args.clients/dataPointCount)*i
-        ivar = numClients
+        ivar.append(numClients)
 
     throughput = args.throughput/numSlaves
     if args.independent_variable == 't':
         throughput = i*(args.throughput/dataPointCount)/numSlaves
-        ivar = throughput
+        ivar.append(throughput)
 
     amount = 2*throughput
 
@@ -234,19 +259,16 @@ for i in xrange(1, dataPointCount + 1):
             latency[k] += v
 
     #calculate the latency mean and confidence interval
-    stats = calculateStatistics(latency)
-    latencyFile.write("%d, %f, %f, %f\n" % (ivar, stats["mean"], stats["low"], stats["high"]))
+    latencyResults.append(calculateStatistics(latency))
 
     #calculate the throughput
-    throughput = (amount * numSlaves)/(time.time() - start)
-    throughputFile.write("%f, %f\n" % (ivar, (throughput * numSlaves)))
+    throughputResults.append((amount * numSlaves)/(time.time() - start))
 
     #CPU usage
-    cpuUsage = (getJiffies(process.pid) - startServJiffies)/float(getSystemJiffies() - startSysJiffies)
-    cpuFile.write("%f, %f\n" % (ivar, cpuUsage))
+    cpuResults.append(((getJiffies(process.pid) - startServJiffies)/float(getSystemJiffies() - startSysJiffies)) * 100)
 
     #memory usage
-    memoryFile.write("%f, %f\n" % (ivar, getMemoryUsageOfPid(process.pid)))
+    memoryResults.append(getMemoryUsageOfPid(process.pid))
 
     #if the % changed, print it
     if int(i*100/dataPointCount) > percentDone:
@@ -254,12 +276,53 @@ for i in xrange(1, dataPointCount + 1):
         print "%d%%" % percentDone,
         sys.stdout.flush()
 
+#create a folder for results
+outputFilePath = os.path.join(args.output_path, datetime.datetime.now().strftime("%Y-%m-%d %H;%M"))
+os.mkdir(outputFilePath)
 
-#done writing data
-latencyFile.close()
-throughputFile.close()
-memoryFile.close()
-cpuFile.close()
+#write out the configuration used
+configFile = open(os.path.join(outputFilePath, "config.txt"), "w")
+configFile.write("#\n# esb tests performed at %s\n" % datetime.datetime.now().strftime("%R on %A, %B %e"))
+configFile.write("#\n")
+configFile.write("# Configuration Settings:\n")
+configFile.write("#    clients:%d\n" % args.clients)
+configFile.write("#    keys:%d\n" % args.keys)
+configFile.write("#    throughput:%d\n" % args.throughput)
+configFile.write("#    data points:%d\n" % dataPointCount)
+configFile.write("#    value size:%d\n" % args.length)
+configFile.write("#\n")
+configFile.write("# Independent Variable:\n")
+configFile.write("#    %s\n" % ivar_filename)
+configFile.write("#\n")
+configFile.write("#\n")
+configFile.close()
+
+if args.raw_output:    
+    #write out
+    writeDataToFile(outputFilePath, ivar, cpuResults, ivar_filename, "cpu")
+    writeDataToFile(outputFilePath, ivar, memoryResults, ivar_filename, "mem")
+    writeDataToFile(outputFilePath, ivar, throughputResults, ivar_filename, "IOPs")
+
+    #latency is a special case
+    file = open(os.path.join(outputFilePath, ("latency_vs_%s.txt" % ivar_filename)), "w")
+    file.write("# <%s> <latency <ymin> <ymax>\n" % ivar_filename)
+    i = 0
+    for item in latencyResults:
+        file.write("%f, %f, %f, %f\n" % (ivar[i], item["mean"], item["low"], item["high"]))
+        i += 1
+    file.close()
+
+#create graphs
+plotData(outputFilePath, ivar, memoryResults, ivar_title, "Memory (MB)", ivar_filename, "mem")
+plotData(outputFilePath, ivar, cpuResults, ivar_title, "CPU Utilization (%)", ivar_filename, "cpu")
+plotData(outputFilePath, ivar, throughputResults, ivar_title, "Actual Throughput (IOPs/s)", ivar_filename, "IOPs")
+
+latencyMean = []
+for item in latencyResults:
+    latencyMean.append(item["mean"])
+
+plotData(outputFilePath, ivar, latencyMean, ivar_title, "Latency (ms)", ivar_filename, "Latency")
+
 
 #close the connections to the slaves
 for slave in slaves:

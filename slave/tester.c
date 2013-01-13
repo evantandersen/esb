@@ -97,7 +97,7 @@ void* testClient(void* parameters)
                     }
                     record.value[worker->valueSize] = '\0';
                 }
-                
+                                
                 struct timeval start;
                 gettimeofday(&start, NULL);
                 if(storage_set(worker->table, keyBuf, &record, worker->conn) == -1)
@@ -152,6 +152,7 @@ void* testClient(void* parameters)
                         if(strcmp(worker->values[keyIndex], rec.value))
                         {
                             //values don't match
+                            printf("Server returned %s, expected %s\n", rec.value, worker->values[keyIndex]);
                             return "Server returned incorrect key";
                         }
                     }
@@ -176,10 +177,10 @@ void* testClient(void* parameters)
                             worker->values[keyIndex][j] = rec.value[j];
                         }
                     }
-                    
+                                        
                     struct timeval start;
                     gettimeofday(&start, NULL);
-                    if(storage_get(worker->table, keyBuf, &rec, worker->conn) == -1)
+                    if(storage_set(worker->table, keyBuf, &rec, worker->conn) == -1)
                     {
                         return "Failed to change key on server";
                     }

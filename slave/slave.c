@@ -148,6 +148,13 @@ void performRequest(struct workerTask* tasks, int taskCount, json_t** result)
     pthread_t* threads = xmalloc(sizeof(pthread_t) * taskCount);
     for(int i = 0; i < taskCount; i++)
     {
+        //don't start a worker if it does'nt have any keys
+        if(tasks[i].numKeys == 0)
+        {
+            taskCount = i;
+            break;
+        }
+        
         tasks[i].latencyResults = latencyResults;
         
         //TODO - possibly reduce stack size for clients
@@ -302,7 +309,7 @@ int beginSlavery(int fd)
             uint64_t numKeysToAdd = json_integer_value(json_object_get(nextCommand, "amount"));
             if(errorChecking)
             {
-                values = xrealloc(&values, sizeof(char*) * (numKeys + numKeysToAdd));
+                values = xrealloc(values, sizeof(char*) * (numKeys + numKeysToAdd));
                 for(uint64_t i = 0; i < numKeysToAdd; i++)
                 {
                     values[numKeys + i] = xmalloc(valueLength + 1);
