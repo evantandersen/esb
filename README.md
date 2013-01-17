@@ -17,11 +17,20 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
 **Requirements**
  - Master requires linux
  - Slave supports most POSIX systems
- - [Jansson](http://www.digip.org/jansson/) (JSON Parser)
+ - [Jansson](http://www.digip.org/jansson/) (JSON Parser Library)
  - [Matplotlib](http://matplotlib.org/index.html) (Python lib for grahping)
 
 **How To Use**
 
+esb has two components - the master and the slave. The master handles executing the server, distributing work and collecting the results. The slave(s) execute the commands from the master and provide the workload for the server. 
+
+The slave needs to be compiled with a client library before it can be used. Add the file `libstorage.a` to the `slave` folder, and then run make. 
+
+To run a test, copy your `server` executable into the master directory. Launch at least one slave. When it lanches, it will print the local IP address of the computer. Pass these IP(s) as arguments to the master, so that it knows which computers to connect to:
+
+python esb_master.py [slave IPs]
+
+By default, esb will measure the effect on performance caused by varying the number of keys from 0 to 8192. The results will be placed in a folder labelled with the current date and time.
 
 
 **Screenshots**
