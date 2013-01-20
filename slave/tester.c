@@ -20,7 +20,13 @@ void* testClient(void* parameters)
 {
     //copy the worker parametrs onto the stack so we don't have to free them later
     struct workerTask* worker = (struct workerTask*)parameters;
-        
+    
+    uint16_t randContext[3];
+    for(int i = 0; i < 3; i++)
+    {
+        randContext[i] = (time(NULL) ^ getpid());
+    }
+    
     if(!worker->conn)
     {
         //spread the load from new connections so the server won't be overloaded

@@ -428,7 +428,7 @@ int beginSlavery(int fd)
         connPoolCount = numClients;
         
         //send the result back to the master
-        char* serialResponse = json_dumps(requestResponse, JSON_DECODE_ANY);
+        char* serialResponse = json_dumps(requestResponse, JSON_COMPACT);
         json_decref(requestResponse);
         size_t len = strlen(serialResponse);
         if(len > 1048576)
