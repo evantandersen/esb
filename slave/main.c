@@ -40,7 +40,11 @@ int main(int argc, char** argv)
     }
     
     //OSX maximum
+#ifdef __APPLE__
     limit.rlim_cur = 10240;
+#else
+    limit.rlim_cur = limit.rlim_max;
+#endif
     
     if(setrlimit(RLIMIT_NOFILE, &limit))
     {
