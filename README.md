@@ -21,10 +21,10 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
  - [Matplotlib](http://matplotlib.org/index.html) (Python lib for grahping)
 
 **Screenshots**
- - [CPU Utilization vs Number of Keys](http://i.imgur.com/zS5Uc.png)
- - [Memory vs Concurrent Clients](http://i.imgur.com/snGcS.png)
- - [Actual vs Requested Throughput](http://i.imgur.com/2V8DB.png)
- - [Latency vs Number of Keys](http://i.imgur.com/XxcDL.png)
+ - [CPU Utilization vs Concurrent Clients](http://i.imgur.com/frS7wFq.png)
+ - [Memory vs Concurrent Clients](http://i.imgur.com/G9GENpZ.png)
+ - [Throughput vs Number of Keys](http://i.imgur.com/gnfyEiZ.png)
+ - [Latency vs Number of Keys](http://i.imgur.com/JG8L38z.png)
 
 **How To Use**
 
