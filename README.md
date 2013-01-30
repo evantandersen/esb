@@ -28,10 +28,11 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
 
 **How To Use**
 
-Please see [the wiki](Home) for detailed usage
+Please see [the wiki](https://github.com/charliehorse55/esb/wiki) for detailed usage information
 
 **Future Developments**
  - Measure network usage
  - Add more tests, such as repetitive add/remove cycles
  - Extend tester to support complex queries
+ - Reduce number of threads spawned for high numbers of clients
  - It would be a great addition to esb to have a windows port of the client, to increase the number of client nodes available
