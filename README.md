@@ -14,12 +14,6 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
  - Memory Usage
  - CPU Usage
 
-**Requirements**
- - Master requires linux
- - Slave supports most POSIX systems
- - [Jansson](http://www.digip.org/jansson/) (JSON Parser Library)
- - [Matplotlib](http://matplotlib.org/index.html) (Python lib for grahping)
-
 **Screenshots**
  - [CPU Utilization vs Concurrent Clients](http://i.imgur.com/frS7wFq.png)
  - [Memory vs Concurrent Clients](http://i.imgur.com/G9GENpZ.png)
