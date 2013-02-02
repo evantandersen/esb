@@ -233,6 +233,12 @@ int compareTimes(const struct timeval* a, const struct timeval* b)
 
 int beginSlavery(int fd)
 {
+    uint16_t randContext[3];
+    for(int i = 0; i < 3; i++)
+    {
+        randContext[i] = time(NULL) ^ getpid();
+    }
+    
     int returnCode = 0;
     
     json_t* params = NULL;
@@ -315,7 +321,7 @@ int beginSlavery(int fd)
                     values[numKeys + i] = xmalloc(valueLength + 1);
                     for(int j = 0; j < valueLength; j++)
                     {
-                        values[numKeys + i][j] = (randomZeroToOne() * 26) + 'A';
+                        values[numKeys + i][j] = (erand48(randContext) * 26) + 'A';
                     }
                     values[numKeys + i][valueLength] = '\0';
                 }

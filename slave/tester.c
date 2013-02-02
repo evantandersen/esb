@@ -24,13 +24,13 @@ void* testClient(void* parameters)
     uint16_t randContext[3];
     for(int i = 0; i < 3; i++)
     {
-        randContext[i] = (time(NULL) ^ getpid());
+        randContext[i] = time(NULL) ^ worker->workerID;
     }
     
     if(!worker->conn)
     {
         //spread the load from new connections so the server won't be overloaded
-        usleep(randomZeroToOne() * 1000 + 1000*worker->connOpenDelay);
+        usleep(erand48(randContext) * 1000 + 1000*worker->connOpenDelay);
         
         worker->conn = storage_connect(worker->hostname, worker->port);
         if(!worker->conn)
@@ -61,7 +61,7 @@ void* testClient(void* parameters)
         period = (1/worker->throughput) * 1000000;
         
         //start at a random time
-        usleep(randomZeroToOne() * period);
+        usleep(erand48(randContext) * period);
     }
     struct timeval next;
     gettimeofday(&next, NULL);
@@ -99,7 +99,7 @@ void* testClient(void* parameters)
                 {
                     for(int j = 0; j < worker->valueSize; j++)
                     {
-                        record.value[j] = (randomZeroToOne() * 26) + 'A';
+                        record.value[j] = (erand48(randContext) * 26) + 'A';
                     }
                     record.value[worker->valueSize] = '\0';
                 }
@@ -132,12 +132,12 @@ void* testClient(void* parameters)
                 
             case kClientRunWorkload:
             {
-                uint64_t keyIndex = randomZeroToOne() * worker->numKeys;
+                uint64_t keyIndex = erand48(randContext) * worker->numKeys;
                 
                 char keyBuf[128];
                 hashInt64(keyIndex + worker->startingKey, keyBuf);
                 
-                double chance = randomZeroToOne();
+                double chance = erand48(randContext);
                 
                 //read
                 if(chance < worker->workloadComposition[0])
@@ -171,7 +171,7 @@ void* testClient(void* parameters)
                     
                     for(int j = 0; j < worker->valueSize; j++)
                     {
-                        rec.value[j] = (randomZeroToOne() * 26) + 'A';
+                        rec.value[j] = (erand48(randContext) * 26) + 'A';
                     }
                     rec.value[worker->valueSize] = '\0';
                     

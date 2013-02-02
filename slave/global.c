@@ -39,11 +39,6 @@ void* xrealloc(void* pointer, size_t size)
 }
 
 
-double randomZeroToOne()
-{
-    return rand() * (1.0/(RAND_MAX + 1.0));
-}
-
 //return the number of 100uS ticks
 uint64_t timeElapsed(struct timeval* start)
 {
