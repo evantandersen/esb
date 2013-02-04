@@ -10,31 +10,9 @@ from collections import defaultdict
 import os.path
 import mmap
 import sys
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plot
-import matplotlib.ticker
 import datetime
 import decimal
 from math import log10, floor, fabs
-
-
-def round_sig(x, sig=2):
-    if x == 0:
-        return 0
-    return round(x, sig-int(floor(log10(fabs(x))))-1)
-
-
-def engNotation(x, pos):
-    power = 0
-    if x > 0:
-        power = int(math.floor((math.floor(math.log10(x)))/3))
-    a = {-4:"p", -3:"n", -2:"u", -1:"m", 0:"", 1:"K", 2:"M", 3:"G", 4:"T"}
-    amount = round_sig(x/(10**(3*power)), 2)
-    if amount >= 10:
-        return "%d%s" % (amount, a[power])
-    return "%.1f%s" % (amount, a[power])
-
 
 def calculateStatistics(latencyDict):
     sortedData = [(k, latency[k]) for k in sorted(latency, key=int)]
@@ -58,25 +36,6 @@ def calculateStatistics(latencyDict):
             high = key
         
     return {"mean":total/(float(count)*10.0), "low":float(low)/10, "high":float(high)/10}
-
-def plotData(path, x, y, xlabel, ylabel, xshort, yshort, xFormat=False, yFormat=False):
-
-    plot.plot(x, y)
-    
-    #if flag is set, use engineering notation
-    if xFormat:
-        fmt = matplotlib.ticker.FuncFormatter(engNotation)
-        plot.gca().xaxis.set_major_formatter(fmt)
-    if yFormat:
-        fmt = matplotlib.ticker.FuncFormatter(engNotation)
-        plot.gca().yaxis.set_major_formatter(fmt)
-
-    plot.xlabel(xlabel)
-    plot.ylabel(ylabel)
-    x1,x2,y1,y2 = plot.axis()
-    plot.axis((0,x2,0,y2*1.25))
-    plot.savefig(os.path.join(path, "%s_vs_%s.png" % (yshort, xshort)))
-    plot.close()
 
 def writeDataToFile(path, x, y, xshort, yshort):
     file = open(os.path.join(path, ("%s_vs_%s.txt" % (yshort, xshort))), "w")
@@ -329,32 +288,19 @@ configFile.write("#\n")
 configFile.write("#\n")
 configFile.close()
 
-if args.raw_output:    
-    #write out
-    writeDataToFile(outputFilePath, ivar, cpuResults, ivar_filename, "cpu")
-    writeDataToFile(outputFilePath, ivar, memoryResults, ivar_filename, "mem")
-    writeDataToFile(outputFilePath, ivar, throughputResults, ivar_filename, "IOPs")
+#write out
+writeDataToFile(outputFilePath, ivar, cpuResults, ivar_filename, "cpu")
+writeDataToFile(outputFilePath, ivar, memoryResults, ivar_filename, "mem")
+writeDataToFile(outputFilePath, ivar, throughputResults, ivar_filename, "IOPs")
 
-    #latency is a special case
-    file = open(os.path.join(outputFilePath, ("latency_vs_%s.txt" % ivar_filename)), "w")
-    file.write("# <%s> <latency <ymin> <ymax>\n" % ivar_filename)
-    i = 0
-    for item in latencyResults:
-        file.write("%f, %f, %f, %f\n" % (ivar[i], item["mean"], item["low"], item["high"]))
-        i += 1
-    file.close()
-
-#create graphs
-plotData(outputFilePath, ivar, memoryResults, ivar_title, "Memory (MB)", ivar_filename, "mem", xFormat=True)
-plotData(outputFilePath, ivar, cpuResults, ivar_title, "CPU Utilization (%)", ivar_filename, "cpu", xFormat=True)
-plotData(outputFilePath, ivar, throughputResults, ivar_title, "Actual Throughput (IOPs/s)", ivar_filename, "IOPs", xFormat=True, yFormat=True)
-
-latencyMean = []
+#latency is a special case
+file = open(os.path.join(outputFilePath, ("latency_vs_%s.txt" % ivar_filename)), "w")
+file.write("# <%s> <latency <ymin> <ymax>\n" % ivar_filename)
+i = 0
 for item in latencyResults:
-    latencyMean.append(item["mean"])
-
-plotData(outputFilePath, ivar, latencyMean, ivar_title, "Latency (ms)", ivar_filename, "Latency", xFormat=True)
-
+    file.write("%f, %f, %f, %f\n" % (ivar[i], item["mean"], item["low"], item["high"]))
+    i += 1
+file.close()
 
 #close the connections to the slaves
 for slave in slaves:
