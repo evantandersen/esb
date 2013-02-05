@@ -1,5 +1,4 @@
-import argparse
-import socket
+from optparse import OptionParserimport socket
 import json
 import math
 import subprocess
@@ -68,8 +67,7 @@ def readPacket(recvSocket):
     result = recvSocket.recv(8, socket.MSG_WAITALL)
     size = int(result)
     if size > 1048576:
-        if args.verbose:
-            print "Packet too large (%d)" % size
+        raise Exception('PacketSize')
         return None
     result = json.loads(recvSocket.recv(size, socket.MSG_WAITALL))
     if len(result['errors']) != 0:
@@ -111,20 +109,19 @@ def getMemoryUsageOfPid(pid):
 
 
 #start of program execution
-parser = argparse.ArgumentParser()
-parser.add_argument("slaves", nargs='+', help="Address of slaves")
-parser.add_argument("-k", "--keys", help="Specify the number of keys", type=int, default=512)
-parser.add_argument("-c", "--clients", help="Specify the number of clients", type=int, default=1)
-parser.add_argument("-t", "--throughput", help="Specify the number of operations per second", type=int, default=1024)
-parser.add_argument("-i", "--independent-variable", default='k', choices=['c', 'k', 't'])
-parser.add_argument("-l", "--length", help="Specify the length of the values stored", type=int, default=128)
-parser.add_argument("-n", "--num-datapoints", help="Specify the number of datapoints", type=int, default=64)
-parser.add_argument("-s", "--server-path", help="Filepath of server executable", default="server")
-parser.add_argument("-o", "--output-path", help="Output filepath", default="")
-parser.add_argument("--error-checking", help="Check the server's output", action="store_true")
-parser.add_argument("--raw-output", help="Save the raw data to files", action="store_true")
+parser = OptionParser()
+parser.add_option("-k","--keys", type="int", default=512, help="Specify the number of keys")
+parser.add_option("-c","--clients", type="int", default=1, help="Specify the number of clients")
+parser.add_option("-t","--throughput", type="int", default=1024, help="Specify the number of operations per second")
+parser.add_option("-i","--independent-variable", default=1024, choices=['c', 'k', 't'])
+parser.add_option("-l","--length", type="int", default=128, help="Specify the length of the values stored")
+parser.add_option("-n","--num-datapoints", type="int", default=64, help="Specify the number of datapoints")
+parser.add_option("-s","--server-path", default="server", help="Filepath of server executable")
+parser.add_option("-o","--output-path", default="", help="Output filepath")
+parser.add_option("--error-checking", action="store_true", help="Check the server's output")
+parser.add_option("--raw-output", action="store_true", help="Save the raw data to files (ignored on eecg distribution)")
 
-args = parser.parse_args()
+(options, args) = parser.parse_args()
 
 #find our local IP
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -138,7 +135,7 @@ config.write("server_host 0.0.0.0\nserver_port 3940\nusername someuser\npassword
 config.close()
 
 #start the server
-process = subprocess.Popen([args.server_file_path, "esb-test.config"])
+process = subprocess.Popen([options.server_file_path, "esb-test.config"])
 print "Server spawned on pid: %d" % process.pid
 
 #kill the server when we exit
@@ -150,7 +147,7 @@ time.sleep(0.5)
 #connect to the slaves
 numSlaves = 0
 slaves = []
-for slave in args.slaves:
+for slave in args:
     newSocket = socket.socket()
     newSocket.connect((slave, 4912))
     slaves.append(newSocket)
@@ -159,15 +156,15 @@ for slave in args.slaves:
 #send the initial details
 i = 0;
 for slave in slaves:
-    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 48, "username":"someuser", "password":"somepsswd", "table":"test","error-checking":args.error_checking, "value-length":args.length}
+    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 48, "username":"someuser", "password":"somepsswd", "table":"test","error-checking":options.error_checking, "value-length":options.length}
     slave.sendall(createPacket(init))
     i += 1
 
 #client and throughput tests have the keys inserted at the start
-if args.independent_variable == 'c' or args.independent_variable == 't':
+if options.independent_variable == 'c' or options.independent_variable == 't':
     i = 0;
     for slave in slaves:
-        command = {"command":"add","num-clients":splitNWays(args.clients, numSlaves, i), "amount":splitNWays(args.keys, numSlaves, i),"throughput":0}
+        command = {"command":"add","num-clients":splitNWays(options.clients, numSlaves, i), "amount":splitNWays(options.keys, numSlaves, i),"throughput":0}
         slave.sendall(createPacket(command))
         i += 1
     
@@ -180,18 +177,18 @@ dataPointCount = 0
 ivar_filename = ''
 ivar_title = ''
 
-if args.independent_variable == 'c':
-    dataPointCount = min(args.clients, args.num_datapoints)
+if options.independent_variable == 'c':
+    dataPointCount = min(options.clients, options.num_datapoints)
     ivar_filename = "clients"
     ivar_title = "Concurrent Clients"
 
-if args.independent_variable == 'k':
-    dataPointCount = min(args.keys, args.num_datapoints)
+if options.independent_variable == 'k':
+    dataPointCount = min(options.keys, options.num_datapoints)
     ivar_filename = "keys"
     ivar_title = "Number of Keys"
 
-if args.independent_variable == 't':
-    dataPointCount = min(args.throughput, args.num_datapoints)
+if options.independent_variable == 't':
+    dataPointCount = min(options.throughput, options.num_datapoints)
     ivar_filename = "IOPs"
     ivar_title = "Requested Throughput (IOPs/s)"
 
@@ -206,28 +203,28 @@ cpuResults = []
 temp = 0
 for i in xrange(1, dataPointCount + 1):
 
-    if args.independent_variable == 'k':
-        numKeys = splitNWays(args.keys, dataPointCount, i)
+    if options.independent_variable == 'k':
+        numKeys = splitNWays(options.keys, dataPointCount, i)
         temp += numKeys
         ivar.append(temp)
         
         j = 0
         for slave in slaves:
-            command = {"command":"add","num-clients":splitNWays(args.clients, numSlaves, j),"amount":splitNWays(numKeys, numSlaves, j), "throughput":0}
+            command = {"command":"add","num-clients":splitNWays(options.clients, numSlaves, j),"amount":splitNWays(numKeys, numSlaves, j), "throughput":0}
             slave.sendall(createPacket(command))
             j += 1
         
         for slave in slaves:
             readPacket(slave)
 
-    numClients = args.clients
-    if args.independent_variable == 'c':
-        numClients = (args.clients/dataPointCount)*i
+    numClients = options.clients
+    if options.independent_variable == 'c':
+        numClients = (options.clients/dataPointCount)*i
         ivar.append(numClients)
 
-    throughput = args.throughput/numSlaves
-    if args.independent_variable == 't':
-        throughput = i*(args.throughput/dataPointCount)/numSlaves
+    throughput = options.throughput/numSlaves
+    if options.independent_variable == 't':
+        throughput = i*(options.throughput/dataPointCount)/numSlaves
         ivar.append(throughput)
 
     amount = 2*throughput
@@ -268,7 +265,7 @@ for i in xrange(1, dataPointCount + 1):
         sys.stdout.flush()
 
 #create a folder for results
-outputFilePath = os.path.join(args.output_path, datetime.datetime.now().strftime("%Y-%m-%d %H.%M"))
+outputFilePath = os.path.join(options.output_path, datetime.datetime.now().strftime("%Y-%m-%d %H.%M"))
 os.mkdir(outputFilePath)
 
 #write out the configuration used
@@ -276,11 +273,11 @@ configFile = open(os.path.join(outputFilePath, "config.txt"), "w")
 configFile.write("#\n# esb tests performed at %s\n" % datetime.datetime.now().strftime("%R on %A, %B %e"))
 configFile.write("#\n")
 configFile.write("# Configuration Settings:\n")
-configFile.write("#    clients:%d\n" % args.clients)
-configFile.write("#    keys:%d\n" % args.keys)
-configFile.write("#    throughput:%d\n" % args.throughput)
+configFile.write("#    clients:%d\n" % options.clients)
+configFile.write("#    keys:%d\n" % options.keys)
+configFile.write("#    throughput:%d\n" % options.throughput)
 configFile.write("#    data points:%d\n" % dataPointCount)
-configFile.write("#    value size:%d\n" % args.length)
+configFile.write("#    value size:%d\n" % options.length)
 configFile.write("#\n")
 configFile.write("# Independent Variable:\n")
 configFile.write("#    %s\n" % ivar_filename)
