@@ -126,7 +126,7 @@ parser.add_option("--raw-output", action="store_true", help="Save the raw data t
 
 #find our local IP
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 0))
+s.connect(("8.8.8.8", 4912))
 hostIP = s.getsockname()[0]
 s.close()
 
@@ -136,7 +136,7 @@ config.write("server_host 0.0.0.0\nserver_port 3940\nusername someuser\npassword
 config.close()
 
 #start the server
-process = subprocess.Popen([options.server_file_path, "esb-test.config"])
+process = subprocess.Popen([options.server_path, "esb-test.config"])
 print "Server spawned on pid: %d" % process.pid
 
 #kill the server when we exit
