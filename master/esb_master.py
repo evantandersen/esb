@@ -175,7 +175,7 @@ s.close()
 
 #create a config file
 config = open("esb-test.config", "w")
-config.write("server_host 0.0.0.0\nserver_port 3940\nusername someuser\npassword somepsswd\n")
+config.write("server_host 0.0.0.0\nserver_port 3940\nusername someuser\npassword somepsswd\ntable test\n")
 config.close()
 
 #start the server
