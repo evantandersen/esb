@@ -1,4 +1,5 @@
-from optparse import OptionParserimport socket
+from optparse import OptionParser
+import socket
 import json
 import math
 import subprocess
