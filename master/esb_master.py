@@ -154,6 +154,9 @@ for slave in args:
     slaves.append(newSocket)
     numSlaves += 1
 
+if numSlaves == 0:
+    raise Exception('No slaves found')
+
 #send the initial details
 i = 0;
 for slave in slaves:
