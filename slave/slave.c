@@ -244,6 +244,8 @@ int beginSlavery(int fd)
     json_t* params = NULL;
     json_t* nextCommand = NULL;
     
+    char** values = NULL;
+    
     struct workerTask* tasks = NULL;
     
     uint32_t connPoolSize = 128;
@@ -278,8 +280,6 @@ int beginSlavery(int fd)
     
     uint64_t slaveID = json_integer_value(json_object_get(params, "slave-id"));
     uint64_t numKeys = 0;
-    
-    char** values = NULL;
     
     
     int errorChecking = json_is_true(json_object_get(params, "error-checking"));
