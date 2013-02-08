@@ -113,7 +113,7 @@ def getMemoryUsageOfPid(pid):
 parser = OptionParser()
 parser.add_option("-k","--keys", type="int", default=512, help="Specify the number of keys")
 parser.add_option("-c","--clients", type="int", default=1, help="Specify the number of clients")
-parser.add_option("-t","--throughput", type="int", default=1024, help="Specify the number of operations per second")
+parser.add_option("-t","--throughput", type="int", default=32, help="Specify the number of operations per second")
 parser.add_option("-i","--independent-variable", default='k', choices=['c', 'k', 't'])
 parser.add_option("-l","--length", type="int", default=128, help="Specify the length of the values stored")
 parser.add_option("-n","--num-datapoints", type="int", default=64, help="Specify the number of datapoints")
