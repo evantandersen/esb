@@ -119,8 +119,8 @@ parser.add_option("-l","--length", type="int", default=128, help="Specify the le
 parser.add_option("-n","--num-datapoints", type="int", default=64, help="Specify the number of datapoints")
 parser.add_option("-s","--server-path", default="./server", help="Filepath of server executable")
 parser.add_option("-o","--output-path", default="", help="Output filepath")
-parser.add_option("--error-checking", action="store_true", help="Check the server's output")
-parser.add_option("--raw-output", action="store_true", help="Save the raw data to files (ignored on eecg distribution)")
+parser.add_option("--error-checking", action="store_true", help="Check the server's output", default=False)
+parser.add_option("--raw-output", action="store_true", help="Save the raw data to files (ignored on eecg distribution)", default=True)
 
 (options, args) = parser.parse_args()
 
