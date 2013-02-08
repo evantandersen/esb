@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <jansson.h>
+#include "jansson.h"
 
 #include "network.h"
 #include "tester.h"
