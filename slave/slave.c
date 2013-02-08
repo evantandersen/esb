@@ -257,6 +257,7 @@ int beginSlavery(int fd)
     params = readCommand(fd, 5000);
     if(!params)
     {
+        fprintf(stderr, "No initialization packet\n");
         returnCode = -1;
         goto exit;
     }
@@ -274,6 +275,7 @@ int beginSlavery(int fd)
          json_is_boolean(json_object_get(params, "error-checking")) &&
          json_is_integer(json_object_get(params, "value-length"))))
     {
+        fprintf(stderr, "Invalid initialization packet\n");
         returnCode = -1;
         goto exit;
     }
@@ -292,6 +294,7 @@ int beginSlavery(int fd)
         nextCommand = readCommand(fd, 15000);
         if(!nextCommand)
         {
+            fprintf(stderr, "Invalid next command\n");
             returnCode = -1;
             goto exit;
         }
@@ -302,6 +305,7 @@ int beginSlavery(int fd)
              json_is_integer(json_object_get(nextCommand, "num-clients")) &&
             json_is_number(json_object_get(nextCommand, "throughput"))))
         {
+            fprintf(stderr, "Invalid next command format\n");
             returnCode = -1;
             goto exit;
         }
