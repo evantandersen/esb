@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <jansson.h>
 
 #include "global.h"
 
