@@ -8,7 +8,6 @@
 
 #include "slave.h"
 
-//TODO add timeout
 json_t* readCommand(int fd, int timeout)
 {
     struct timeval start;
@@ -46,7 +45,7 @@ json_t* readCommand(int fd, int timeout)
         
         if(timeElapsed(&start) < timeout * 10)
         {
-            usleep(10000);
+            usleep(1000);
             continue;
         }
         return NULL;

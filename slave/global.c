@@ -54,16 +54,21 @@ int64_t uSElapsed(struct timeval* start)
     return (end.tv_sec - start->tv_sec) * 1000000 + (end.tv_usec - start->tv_usec);
 }
 
+//20 char string to meet ECE297 spec
 void hashInt64(uint64_t input, char* output)
 {
+    char* hex = "0123456789abcdef";
     MD5_CTX context;
     MD5Init(&context);
     MD5Update(&context, (unsigned char*)&input, 8);
     MD5Final(&context);
-    for(int i = 0; i < 16; i++)
+    for(int i = 0; i < 9; i++)
     {
-        sprintf(&output[i*2], "%02X", context.digest[i]);
+        output[i*2    ] = hex[context.digest[i] & 0xf];
+        output[i*2 + 1] = hex[context.digest[i] >> 4];
     }
+    output[18] = hex[context.digest[9] & 0xf];
+    output[19] = '\0';
 }
 
 
