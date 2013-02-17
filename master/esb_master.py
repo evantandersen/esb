@@ -132,7 +132,7 @@ s.close()
 
 #create a config file
 config = open("esb-test.config", "w")
-config.write("server_host 0.0.0.0\nserver_port 3940\nusername someuser\npassword somepsswd\ntable test\n")
+config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test\n")
 config.close()
 
 #start the server
@@ -160,7 +160,7 @@ if numSlaves == 0:
 #send the initial details
 i = 0;
 for slave in slaves:
-    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 48, "username":"someuser", "password":"somepsswd", "table":"test","error-checking":options.error_checking, "value-length":options.length}
+    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 48, "username":"admin", "password":"dog4sale", "table":"test","error-checking":options.error_checking, "value-length":options.length}
     slave.sendall(createPacket(init))
     i += 1
 
