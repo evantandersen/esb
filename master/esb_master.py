@@ -179,7 +179,7 @@ config.write("server_host 0.0.0.0\nserver_port 3940\nusername someuser\npassword
 config.close()
 
 #start the server
-process = subprocess.Popen([args.server_file_path, "esb-test.config"])
+process = subprocess.Popen([args.server_path, "esb-test.config"])
 print "Server spawned on pid: %d" % process.pid
 
 #kill the server when we exit
