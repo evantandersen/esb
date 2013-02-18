@@ -160,7 +160,7 @@ parser.add_argument("-t", "--throughput", help="Specify the number of operations
 parser.add_argument("-i", "--independent-variable", default='k', choices=['c', 'k', 't'])
 parser.add_argument("-l", "--length", help="Specify the length of the values stored", type=int, default=128)
 parser.add_argument("-n", "--num-datapoints", help="Specify the number of datapoints", type=int, default=64)
-parser.add_argument("-s", "--server-path", help="Filepath of server executable", default="server")
+parser.add_argument("-s", "--server-path", help="Filepath of server executable", default="./server")
 parser.add_argument("-o", "--output-path", help="Output filepath", default="")
 parser.add_argument("--error-checking", help="Check the server's output", action="store_true")
 parser.add_argument("--raw-output", help="Save the raw data to files", action="store_true")
