@@ -270,7 +270,7 @@ int beginSlavery(int fd)
     int port;
     int errorChecking;
     int valueLength;
-    int result = json_unpack(params, "{s:s, s:s, s:i, s:i, s:s, s:s, s:s, s:b, s:i}",
+    int result = json_unpack(params, "{s:s, s:s, s:i, s:I, s:s, s:s, s:s, s:b, s:i}",
                              "command",         &command,
                              "address",         &address,
                              "port",            &port,
@@ -297,32 +297,22 @@ int beginSlavery(int fd)
             fprintf(stderr, "Invalid next command\n");
             goto exit;
         }
-                
-        //check the bare minimun parameters for a command
-        if(!(json_is_string(json_object_get(nextCommand, "command")) &&
-             (json_is_integer(json_object_get(nextCommand, "amount")) &&
-              json_is_integer(json_object_get(nextCommand, "num-clients")) &&
-              json_is_number(json_object_get(nextCommand, "throughput"))) ||
-             !strcmp("quit", json_string_value(json_object_get(nextCommand, "command")))))
-        {
-
-        }
-        
+                        
         const char* command;
-        int result = json_unpack(params, "{s:s}", "command", &command);
+        int result = json_unpack(nextCommand, "{s:s}", "command", &command);
         if(result == -1)
         {
             fprintf(stderr, "Packet missing command field\n");
             goto exit;
         }
-
+        
         //parse commands and modify keyRange array if needed
         struct workerTask task;
         
         if(!strcmp(command, "add"))
         {
             uint64_t numKeysToAdd;
-            int result = json_unpack(nextCommand, "{s:i}", "amount", &numKeysToAdd);
+            int result = json_unpack(nextCommand, "{s:I}", "amount", &numKeysToAdd);
             if(result == -1)
             {
                 goto exit;
@@ -351,7 +341,7 @@ int beginSlavery(int fd)
         {
             uint64_t numKeysToRemove;
             
-            int result = json_unpack(nextCommand, "{s:i}", "amount", &numKeysToRemove);
+            int result = json_unpack(nextCommand, "{s:I}", "amount", &numKeysToRemove);
             if(result == -1)
             {
                 goto exit;
@@ -389,7 +379,7 @@ int beginSlavery(int fd)
             {
                 task.workloadComposition[i] = json_number_value(json_array_get(array, i));
             }
-            int result = json_unpack(nextCommand, "{s:i}", "amount", &task.count);
+            int result = json_unpack(nextCommand, "{s:I}", "amount", &task.count);
             if(result == -1)
             {
                 goto exit;
