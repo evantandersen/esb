@@ -9,7 +9,7 @@
 #include "global.h"
 
 
-void* xmalloc(size_t size)
+void* __xmalloc(size_t size)
 {
     void* result = malloc(size);
     if(!result)
@@ -27,7 +27,7 @@ void* xmalloc(size_t size)
     return result;
 }
 
-void* xrealloc(void* pointer, size_t size)
+void* __xrealloc(void* pointer, size_t size)
 {
     void* newPointer = realloc(pointer, size);
     if(!newPointer && !size)

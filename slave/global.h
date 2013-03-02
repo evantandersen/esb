@@ -16,8 +16,8 @@
 #include "md5.h"
 
 
-void* xmalloc(size_t size);
-void* xrealloc(void* pointer, size_t size);
+void* __xmalloc(size_t size);
+void* __xrealloc(void* pointer, size_t size);
 
 uint64_t timeElapsed(struct timeval* start);
 int64_t uSElapsed(struct timeval* start);

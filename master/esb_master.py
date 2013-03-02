@@ -132,11 +132,15 @@ s.close()
 
 #create a config file
 config = open("esb-test.config", "w")
-config.write("server_host 0.0.0.0\nserver_port 3940\nusername someuser\npassword somepsswd\ntable test\n")
+config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test\n")
 config.close()
 
 #start the server
+<<<<<<< HEAD
 process = subprocess.Popen([options.server_path, "esb-test.config"])
+=======
+process = subprocess.Popen([args.server_path, "esb-test.config"])
+>>>>>>> master
 print "Server spawned on pid: %d" % process.pid
 
 #kill the server when we exit
@@ -160,7 +164,11 @@ if numSlaves == 0:
 #send the initial details
 i = 0;
 for slave in slaves:
+<<<<<<< HEAD
     init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 48, "username":"someuser", "password":"somepsswd", "table":"test","error-checking":options.error_checking, "value-length":options.length}
+=======
+    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 48, "username":"admin", "password":"dog4sale", "table":"test","error-checking":args.error_checking, "value-length":args.length}
+>>>>>>> master
     slave.sendall(createPacket(init))
     i += 1
 
