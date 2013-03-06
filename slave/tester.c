@@ -35,7 +35,7 @@ void* testClient(void* parameters)
         worker->conn = storage_connect(worker->hostname, worker->port);
         if(!worker->conn)
         {
-            return "Failed to connect to server";
+            return ece297strerror(errno);
         }
         
         int result = storage_auth(worker->username, worker->password, worker->conn);
@@ -43,7 +43,7 @@ void* testClient(void* parameters)
         {
             storage_disconnect(worker->conn);
             worker->conn = NULL;
-            return "Failed to auth to server";
+            return ece297strerror(errno);
         }
     }
     
@@ -108,7 +108,7 @@ void* testClient(void* parameters)
                 gettimeofday(&start, NULL);
                 if(storage_set(worker->table, keyBuf, &record, worker->conn) == -1)
                 {
-                    return "Failed to set key on server";
+                    return ece297strerror(errno);
                 }
                 recordLatency(timeElapsed(&start), worker->latencyResults);
                 break;
@@ -123,7 +123,7 @@ void* testClient(void* parameters)
                 gettimeofday(&start, NULL);
                 if(storage_set(worker->table, keyBuf, NULL, worker->conn) == -1)
                 {
-                    return "Failed to remove key from server";
+                    return ece297strerror(errno);
                 }
                 
                 recordLatency(timeElapsed(&start), worker->latencyResults);
@@ -147,7 +147,7 @@ void* testClient(void* parameters)
                     struct storage_record rec;
                     if(storage_get(worker->table, keyBuf, &rec, worker->conn) == -1)
                     {
-                        return "Failed to read key from server";
+                        return ece297strerror(errno);
                     }
                     
                     recordLatency(timeElapsed(&start), worker->latencyResults);
@@ -188,7 +188,7 @@ void* testClient(void* parameters)
                     gettimeofday(&start, NULL);
                     if(storage_set(worker->table, keyBuf, &rec, worker->conn) == -1)
                     {
-                        return "Failed to change key on server";
+                        return ece297strerror(errno);
                     }
                     
                     recordLatency(timeElapsed(&start), worker->latencyResults);

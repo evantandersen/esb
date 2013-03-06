@@ -71,4 +71,39 @@ void hashInt64(uint64_t input, char* output)
     output[19] = '\0';
 }
 
+const char* ece297strerror(int error)
+{
+    switch (error)
+    {
+        case ERR_INVALID_PARAM:
+        {
+            return "Invalid parameters";
+        }
+        case ERR_CONNECTION_FAIL:
+        {
+            return "Failed to connect to server";
+        }
+        case ERR_NOT_AUTHENTICATED:
+        {
+            return "Not authenticated";
+        }
+        case ERR_AUTHENTICATION_FAILED:
+        {
+            return "Invalid username or password";
+        }
+        case ERR_TABLE_NOT_FOUND:
+        {
+            return "Table not found";
+        }
+        case ERR_KEY_NOT_FOUND:
+        {
+            return "Key not found";
+        }
+        default:
+        {
+            return "Unknown error";
+        }
+    }
+}
+
 
