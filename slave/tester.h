@@ -19,7 +19,7 @@
 #include "global.h"
 #include "storage_protocol.h"
 
-#define kWorkloadTypes 1
+#define kWorkloadTypes 2
 
 #define kClientAddKeys      11
 #define kClientRemoveKeys   12
@@ -31,14 +31,13 @@ struct workerTask
 {
     uint8_t type;
     uint16_t port;
-    uint32_t valueSize;
     uint32_t connOpenDelay;
     uint32_t workerID;
+    uint32_t queryDensity;
     uint64_t count;
     uint64_t* latencyResults;
     uint64_t startingKey;
     uint64_t numKeys;
-    char** values;
     double throughput;
     double workloadComposition[kWorkloadTypes]; //read, write (need n-1 chances, as they always add to 100%)
     const char* table;

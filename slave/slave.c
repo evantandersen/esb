@@ -123,14 +123,6 @@ void splitTasks(struct workerTask* single, struct workerTask* out, int count, vo
         out[i].count = targetCount + (i < targetExtra);
         
         uint64_t keysToAdd = target + (i < extra);
-        if(single->values)
-        {
-            out[i].values = &single->values[currentKey];
-        }
-        else
-        {
-            out[i].values = NULL;
-        }
         out[i].numKeys = keysToAdd;
         out[i].startingKey = currentKey;
         
@@ -243,8 +235,6 @@ int beginSlavery(int fd)
     json_t* params = NULL;
     json_t* nextCommand = NULL;
     
-    char** values = NULL;
-    
     struct workerTask* tasks = NULL;
     
     uint32_t connPoolSize = 128;
@@ -261,16 +251,15 @@ int beginSlavery(int fd)
     }
     
     //make sure the initial packet has all of the required info
-    uint64_t slaveID;
+    int64_t slaveID;
     const char* command;
     const char* address;
     const char* username;
     const char* password;
     const char* tableName;
     int port;
-    int errorChecking;
-    int valueLength;
-    int result = json_unpack(params, "{s:s, s:s, s:i, s:I, s:s, s:s, s:s, s:b, s:i}",
+    int64_t temp;
+    int result = json_unpack(params, "{s:s, s:s, s:i, s:I, s:s, s:s, s:s, s:I}",
                              "command",         &command,
                              "address",         &address,
                              "port",            &port,
@@ -278,15 +267,16 @@ int beginSlavery(int fd)
                              "username",        &username,
                              "password",        &password,
                              "table",           &tableName,
-                             "error-checking",  &errorChecking,
-                             "value-length",    &valueLength);
-    if(result != 0 || strcmp(command, "init") || port <= 0 || port > 65535)
+                             "query-density",   &temp);
+    if(result != 0 || strcmp(command, "init") || port <= 0 || port > 65535 || temp < 0 || temp > UINT32_MAX)
     {
         fprintf(stderr, "Invalid initialization packet recieved\n");
         goto exit;
     }
 
-    uint64_t numKeys = 0;
+    uint32_t queryDensity = temp;
+    
+    uint32_t numKeys = 0;
     
     //loop and execute commands from the master
     while(1)
@@ -317,24 +307,9 @@ int beginSlavery(int fd)
             {
                 goto exit;
             }
-
-            if(errorChecking)
-            {
-                values = __xrealloc(values, sizeof(char*) * (numKeys + numKeysToAdd));
-                for(uint64_t i = 0; i < numKeysToAdd; i++)
-                {
-                    values[numKeys + i] = __xmalloc(valueLength + 1);
-                    for(int j = 0; j < valueLength; j++)
-                    {
-                        values[numKeys + i][j] = (erand48(randContext) * 26) + 'A';
-                    }
-                    values[numKeys + i][valueLength] = '\0';
-                }
-            }
             task.startingKey = slaveID + numKeys;
             task.numKeys = numKeysToAdd;
             task.type = kClientAddKeys;
-            task.values = values;
             numKeys += task.numKeys;
         }
         else if(!strcmp(command, "remove"))
@@ -347,15 +322,6 @@ int beginSlavery(int fd)
                 goto exit;
             }
             
-            if(errorChecking)
-            {
-                uint64_t position = numKeys - numKeysToRemove;
-                for(uint64_t i = 0; i < numKeysToRemove; i++)
-                {
-                    free(values[position + i]);
-                }
-                values = __xrealloc(&values, sizeof(char*) * (numKeys - numKeysToRemove));
-            }
             if(numKeysToRemove > numKeys)
             {
                 goto exit;
@@ -363,14 +329,12 @@ int beginSlavery(int fd)
             task.startingKey = slaveID + numKeys - numKeysToRemove;
             task.numKeys = numKeysToRemove;
             task.type = kClientRemoveKeys;
-            task.values = NULL;
             numKeys -= numKeysToRemove;
         }
         else if(!strcmp(command, "test"))
         {
             json_t* array = json_object_get(nextCommand, "workload");
 
-            //right now we only need 1 workload type
             if(!(json_is_array(array) && json_array_size(array) == kWorkloadTypes))
             {
                 goto exit;
@@ -386,7 +350,6 @@ int beginSlavery(int fd)
             }
             task.startingKey = slaveID;
             task.numKeys = numKeys;
-            task.values = values;
             task.type = kClientRunWorkload;
         }
         else if(!strcmp(command, "quit"))
@@ -412,12 +375,12 @@ int beginSlavery(int fd)
         
         //fill out the generic task information
         task.table = tableName;
-        task.valueSize = valueLength;
         task.workerID = slaveID;
         task.hostname = address;
         task.username = username;
         task.password = password;
         task.port = port;
+        task.queryDensity = queryDensity;
         
         //split the request between the clients
         while(numClients >= connPoolSize)
@@ -489,13 +452,5 @@ exit:
     free(tasks);
     json_decref(nextCommand);
     json_decref(params);
-    if(values)
-    {
-        for(uint64_t i = 0; i < numKeys; i++)
-        {
-            free(values[i]);
-        }
-        free(values);
-    }
     return returnCode;
 }
