@@ -142,7 +142,7 @@ if pid == 0:
 
     #create a config file
     config = open("esb-test.config", "w")
-    config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test col1:int, col2:int\ndata_directory .\nstorage_policy in-memory")
+    config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test col1:int, col2:int\n")
     config.close()
 
     #start the server
