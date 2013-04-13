@@ -35,12 +35,14 @@ void* testClient(void* parameters)
         worker->conn = storage_connect(worker->hostname, worker->port);
         if(!worker->conn)
         {
+            printf("storage_connect failed\n");
             return ece297strerror(errno);
         }
         
         int result = storage_auth(worker->username, worker->password, worker->conn);
         if(result == -1)
         {
+            printf("storage_auth failed\n");
             storage_disconnect(worker->conn);
             worker->conn = NULL;
             return ece297strerror(errno);
@@ -89,25 +91,14 @@ void* testClient(void* parameters)
                 struct storage_record record;
                 memset(&record.metadata, 0, sizeof(record.metadata));
                 
-                //if error checking is enabled, copy that value in.
-                if(worker->values)
-                {
-                    strcpy(record.value, worker->values[i]);
-                }
-                //otherwise, just generate a random string of the correct length
-                else
-                {
-                    for(int j = 0; j < worker->valueSize; j++)
-                    {
-                        record.value[j] = (erand48(randContext) * 26) + 'A';
-                    }
-                    record.value[worker->valueSize] = '\0';
-                }
+                uint32_t index = (worker->startingKey + i) ^ 0x80000000;
+                sprintf(record.value, "col1 %d, col2 %d", index, index);
                                 
                 struct timeval start;
                 gettimeofday(&start, NULL);
                 if(storage_set(worker->table, keyBuf, &record, worker->conn) == -1)
                 {
+                    printf("storage_set failed\n");
                     return ece297strerror(errno);
                 }
                 recordLatency(timeElapsed(&start), worker->latencyResults);
@@ -123,6 +114,7 @@ void* testClient(void* parameters)
                 gettimeofday(&start, NULL);
                 if(storage_set(worker->table, keyBuf, NULL, worker->conn) == -1)
                 {
+                    printf("storage_set (delete) failed\n");
                     return ece297strerror(errno);
                 }
                 
@@ -132,10 +124,10 @@ void* testClient(void* parameters)
                 
             case kClientRunWorkload:
             {
-                uint64_t keyIndex = erand48(randContext) * worker->numKeys;
+                uint32_t keyIndex = (erand48(randContext) * worker->numKeys) + worker->startingKey;
                 
                 char keyBuf[128];
-                hashInt64(keyIndex + worker->startingKey, keyBuf);
+                hashInt64(keyIndex, keyBuf);
                 
                 double chance = erand48(randContext);
                 
@@ -147,51 +139,45 @@ void* testClient(void* parameters)
                     struct storage_record rec;
                     if(storage_get(worker->table, keyBuf, &rec, worker->conn) == -1)
                     {
+                        printf("storage_get failed\n");
                         return ece297strerror(errno);
                     }
                     
                     recordLatency(timeElapsed(&start), worker->latencyResults);
-                    
-                    //check for accuracy
-                    if(worker->values)
-                    {
-                        if(strcmp(worker->values[keyIndex], rec.value))
-                        {
-                            //values don't match
-                            printf("Server returned %s, expected %s\n", rec.value, worker->values[keyIndex]);
-                            return "Server returned incorrect key";
-                        }
-                    }
                 }
                 //write
-                else
+                else if(chance < worker->workloadComposition[1])
                 {
                     struct storage_record rec;
                     memset(&rec.metadata, 0, sizeof(rec.metadata));
                     
-                    for(int j = 0; j < worker->valueSize; j++)
-                    {
-                        rec.value[j] = (erand48(randContext) * 26) + 'A';
-                    }
-                    rec.value[worker->valueSize] = '\0';
+                    uint32_t index = keyIndex ^ 0x80000000;
+                    sprintf(rec.value, "col1 %d, col2 %d", index, index);
                     
-                    //if we are error checking, we need to change the value in memory
-                    if(worker->values)
-                    {
-                        for(int j = 0; j < worker->valueSize; j++)
-                        {
-                            worker->values[keyIndex][j] = rec.value[j];
-                        }
-                    }
-                                        
                     struct timeval start;
                     gettimeofday(&start, NULL);
                     if(storage_set(worker->table, keyBuf, &rec, worker->conn) == -1)
                     {
+                        printf("storage_set (test) failed\n");
                         return ece297strerror(errno);
                     }
                     
                     recordLatency(timeElapsed(&start), worker->latencyResults);
+                }
+                //query
+                else
+                {
+                    uint32_t base = erand48(randContext) * (UINT32_MAX - worker->queryDensity);
+                    uint32_t end = base + worker->queryDensity;
+                    base ^= 0x80000000;
+                    end ^= 0x80000000;
+                    char predicate[128];
+                    sprintf(predicate, "col1 > %d, col2 < %d", base, end);
+                    if(storage_query(worker->table, predicate, NULL, 0, worker->conn) == -1)
+                    {
+                        printf("storage_query failed\n");
+                        return ece297strerror(errno);
+                    }
                 }
                 break;
             }
@@ -199,3 +185,9 @@ void* testClient(void* parameters)
     }
     return NULL;
 }
+
+
+
+
+
+

@@ -88,7 +88,7 @@ def writeDataToFile(path, x, y, xshort, yshort):
     file.close()
 
 def splitNWays(count, n, i):
-    return int(count/n) + ((count % n) > i)
+    return int(count/n) + int((count % n) > i)
 
 
 def createPacket(buffer):
@@ -158,35 +158,43 @@ parser.add_argument("-k", "--keys", help="Specify the number of keys", type=int,
 parser.add_argument("-c", "--clients", help="Specify the number of clients", type=int, default=1)
 parser.add_argument("-t", "--throughput", help="Specify the number of operations per second", type=int, default=32)
 parser.add_argument("-i", "--independent-variable", default='k', choices=['c', 'k', 't'])
-parser.add_argument("-l", "--length", help="Specify the length of the values stored", type=int, default=128)
 parser.add_argument("-n", "--num-datapoints", help="Specify the number of datapoints", type=int, default=64)
+parser.add_argument("-p", "--pid", help="Use an existing server process", type=int, default=0)
+parser.add_argument("-d", "--query-density", help="The range of which queries should scan", type=int, default=0)
 parser.add_argument("-s", "--server-path", help="Filepath of server executable", default="./server")
 parser.add_argument("-o", "--output-path", help="Output filepath", default="")
-parser.add_argument("--error-checking", help="Check the server's output", action="store_true")
 parser.add_argument("--raw-output", help="Save the raw data to files", action="store_true")
 
 args = parser.parse_args()
 
-#find our local IP
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 0))
-hostIP = s.getsockname()[0]
-s.close()
+pid = args.pid
 
-#create a config file
-config = open("esb-test.config", "w")
-config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test\ndata_directory .\nstorage_policy in-memory")
-config.close()
+if pid == 0:
+    #find our local IP
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 0))
+    hostIP = s.getsockname()[0]
+    s.close()
 
-#start the server
-process = subprocess.Popen([args.server_path, "esb-test.config"])
-print "Server spawned on pid: %d" % process.pid
+    #create a config file
+    config = open("esb-test.config", "w")
+    config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test col1:int, col2:int\ndata_directory .\nstorage_policy in-memory")
+    config.close()
 
-#kill the server when we exit
-atexit.register(process.terminate)
+    #start the server
+    process = subprocess.Popen([args.server_path, "esb-test.config"])
+    pid = process.pid;
+    print "Server spawned on pid: %d" % pid
 
-#give the server time to setup
-time.sleep(0.5)
+    #kill the server when we exit
+    atexit.register(process.terminate)
+
+    #give the server time to setup
+    time.sleep(0.5)
+
+if len(args.slaves) > 256:
+    print "Number of slaves can not exceed 256"
+    exit(-1)
 
 #connect to the slaves
 numSlaves = 0
@@ -200,7 +208,7 @@ for slave in args.slaves:
 #send the initial details
 i = 0;
 for slave in slaves:
-    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 48, "username":"admin", "password":"dog4sale", "table":"test","error-checking":args.error_checking, "value-length":args.length}
+    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 24, "username":"admin", "password":"dog4sale", "table":"test", "query-density":args.query_density}
     slave.sendall(createPacket(init))
     i += 1
 
@@ -280,7 +288,7 @@ for i in xrange(1, dataPointCount + 1):
     
     j = 0
     for slave in slaves:
-        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"workload":[0.8],"throughput":throughput}
+        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"workload":[0.8, 0.95],"throughput":throughput}
         slave.sendall(createPacket(command))
         j += 1
 
@@ -303,8 +311,9 @@ for i in xrange(1, dataPointCount + 1):
     memoryResults.append(getMemoryUsageOfPid(process.pid))
 
     #if the % changed, print it
-    if int(i*100/dataPointCount) > percentDone:
-        percentDone = int(i*100/dataPointCount)
+    newPercent = int(i*100/dataPointCount)
+    if  newPercent != percentDone:
+        percentDone = newPercent
         print "%d%%" % percentDone,
         sys.stdout.flush()
 
@@ -321,7 +330,6 @@ configFile.write("#    clients:%d\n" % args.clients)
 configFile.write("#    keys:%d\n" % args.keys)
 configFile.write("#    throughput:%d\n" % args.throughput)
 configFile.write("#    data points:%d\n" % dataPointCount)
-configFile.write("#    value size:%d\n" % args.length)
 configFile.write("#\n")
 configFile.write("# Independent Variable:\n")
 configFile.write("#    %s\n" % ivar_filename)
