@@ -110,7 +110,6 @@ def getMemoryUsageOfPid(pid):
 
 
 #start of program execution
-<<<<<<< HEAD
 parser = OptionParser()
 parser.add_option("-k","--keys", type="int", default=512, help="Specify the number of keys")
 parser.add_option("-c","--clients", type="int", default=1, help="Specify the number of clients")
