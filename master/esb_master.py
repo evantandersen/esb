@@ -131,7 +131,7 @@ s.connect(("8.8.8.8", 4912))
 hostIP = s.getsockname()[0]
 s.close()
 
-pid = args.pid
+pid = options.pid
 
 if pid == 0:
     #find our local IP
