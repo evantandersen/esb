@@ -251,7 +251,7 @@ for i in xrange(1, dataPointCount + 1):
     #start a timer for throughput
     start = time.time()
     startSysJiffies = getSystemJiffies()
-    startServJiffies = getJiffies(process.pid)
+    startServJiffies = getJiffies(pid)
     
     j = 0
     for slave in slaves:
@@ -272,10 +272,10 @@ for i in xrange(1, dataPointCount + 1):
     throughputResults.append((amount * numSlaves)/(time.time() - start))
 
     #CPU usage
-    cpuResults.append(((getJiffies(process.pid) - startServJiffies)/float(getSystemJiffies() - startSysJiffies)) * 100)
+    cpuResults.append(((getJiffies(pid) - startServJiffies)/float(getSystemJiffies() - startSysJiffies)) * 100)
 
     #memory usage
-    memoryResults.append(getMemoryUsageOfPid(process.pid))
+    memoryResults.append(getMemoryUsageOfPid(pid))
 
     #if the % changed, print it
     newPercent = int(i*100/dataPointCount)

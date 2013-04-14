@@ -370,7 +370,14 @@ int beginSlavery(int fd)
             fprintf(stderr, "Packet missing number of clients or throughput value\n");
             goto exit;
         }
-                
+        
+        if(numClients == 0)
+        {
+            json_decref(nextCommand);
+            nextCommand = NULL;
+            continue;
+        }
+        
         task.connOpenDelay = 0;
         
         //fill out the generic task information
