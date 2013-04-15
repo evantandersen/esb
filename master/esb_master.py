@@ -142,7 +142,7 @@ if pid == 0:
 
     #create a config file
     config = open("esb-test.config", "w")
-    config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test col1:int, col2:int\n")
+    config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test col1:int, col2:int\nconcurrency 1\n")
     config.close()
 
     #start the server
@@ -241,9 +241,9 @@ for i in xrange(1, dataPointCount + 1):
         numClients = (options.clients/dataPointCount)*i
         ivar.append(numClients)
 
-    throughput = options.throughput/numSlaves
+    throughput = options.throughput
     if options.independent_variable == 't':
-        throughput = i*(options.throughput/dataPointCount)/numSlaves
+        throughput = i*(options.throughput/dataPointCount)
         ivar.append(throughput)
 
     amount = 2*throughput
@@ -255,7 +255,7 @@ for i in xrange(1, dataPointCount + 1):
     
     j = 0
     for slave in slaves:
-        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"workload":[0.8, 0.95],"throughput":throughput}
+        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"workload":[0.8, 0.95],"throughput":splitNWays(throughput, numSlaves, j)}
         slave.sendall(createPacket(command))
         j += 1
 
