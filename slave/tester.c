@@ -16,7 +16,7 @@ static void recordLatency(uint64_t dataPoint, uint64_t* stats)
     }
 }
 
-void* testClient(void* parameters)
+const char* testClient(void* parameters)
 {
     //copy the worker parametrs onto the stack so we don't have to free them later
     struct workerTask* worker = (struct workerTask*)parameters;

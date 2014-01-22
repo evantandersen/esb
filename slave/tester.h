@@ -50,7 +50,7 @@ struct workerTask
 
 
 
-void* testClient(void* parameters);
+const char* testClient(void* parameters);
 
 
 #endif

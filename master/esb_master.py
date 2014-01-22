@@ -42,7 +42,7 @@ def writeDataToFile(path, x, y, xshort, yshort):
     file.write("# <%s> <%s>\n" % (xshort, yshort))
     i = 0
     for xData in x:
-        file.write("%f %f\n" % (xData, y[i]))
+        file.write("%f, %f\n" % (xData, y[i]))
         i += 1
     file.close()
 
@@ -120,7 +120,6 @@ parser.add_option("-p", "--pid", help="Use an existing server process", type="in
 parser.add_option("-d", "--query-density", help="The range of which queries should scan", type="int", default=10)
 parser.add_option("-s","--server-path", default="./server", help="Filepath of server executable")
 parser.add_option("-o","--output-path", default="", help="Output filepath")
-parser.add_option("--error-checking", action="store_true", help="Check the server's output", default=False)
 parser.add_option("--raw-output", action="store_true", help="Save the raw data to files (ignored on eecg distribution)", default=True)
 
 (options, args) = parser.parse_args()
@@ -134,14 +133,8 @@ s.close()
 pid = options.pid
 
 if pid == 0:
-    #find our local IP
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 0))
-    hostIP = s.getsockname()[0]
-    s.close()
-
     #create a config file
-    config = open("esb-test.config", "w")
+    config = open("esb_test.config", "w")
     config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test col1:int, col2:int\nconcurrency 1\n")
     config.close()
 
@@ -160,7 +153,18 @@ if len(args) > 256:
     print "Number of slaves can not exceed 256"
     exit(-1)
 
-#connect to the slaves
+#start a new slave if none are listed
+if len(args) == 0:
+    slaveProc = subprocess.Popen(["../slave/esb-slave"])
+    slavePid = slaveProc.pid;
+    print "Slave spawned on pid: %d" % slavePid
+
+    #kill the slave when we exit
+    atexit.register(slaveProc.terminate)
+
+    #give the slave time to setup
+    time.sleep(0.2)
+    
 numSlaves = 0
 slaves = []
 for slave in args:
@@ -169,13 +173,11 @@ for slave in args:
     slaves.append(newSocket)
     numSlaves += 1
 
-if numSlaves == 0:
-    raise Exception('No slaves found')
 
 #send the initial details
 i = 0;
 for slave in slaves:
-    init = {"command":"init","address": hostIP, "port":3940, "slave-id":i << 24, "username":"admin", "password":"dog4sale", "table":"test", "query-density":options.query_density}
+    init = {"command":"init","address":hostIP, "port":3940, "slave-id":i, "username":"admin", "password":"dog4sale", "table":"test", "query-density":options.query_density}
     slave.sendall(createPacket(init))
     i += 1
 

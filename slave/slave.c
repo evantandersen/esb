@@ -161,7 +161,7 @@ void performRequest(struct workerTask* tasks, int taskCount, json_t** result)
             break;
         }
         
-        result = pthread_create(&threads[i], &attributes, testClient, &tasks[i]);
+        result = pthread_create(&threads[i], &attributes, (void *(*)(void*))testClient, &tasks[i]);
         if(result)
         {
             char buf[256];
@@ -243,7 +243,7 @@ int beginSlavery(int fd)
     memset(connPool, 0, sizeof(void*) * connPoolSize);
     
     //recieve initial parameters
-    params = readCommand(fd, 5000);
+    params = readCommand(fd, 1000);
     if(!params)
     {
         fprintf(stderr, "No initialization packet\n");
@@ -251,7 +251,6 @@ int beginSlavery(int fd)
     }
     
     //make sure the initial packet has all of the required info
-    int64_t slaveID;
     const char* command;
     const char* address;
     const char* username;
@@ -263,7 +262,6 @@ int beginSlavery(int fd)
                              "command",         &command,
                              "address",         &address,
                              "port",            &port,
-                             "slave-id",        &slaveID,
                              "username",        &username,
                              "password",        &password,
                              "table",           &tableName,
@@ -281,7 +279,7 @@ int beginSlavery(int fd)
     //loop and execute commands from the master
     while(1)
     {
-        nextCommand = readCommand(fd, 15000);
+        nextCommand = readCommand(fd, 1000);
         if(!nextCommand)
         {
             fprintf(stderr, "Invalid next command\n");
@@ -370,14 +368,13 @@ int beginSlavery(int fd)
             fprintf(stderr, "Packet missing number of clients or throughput value\n");
             goto exit;
         }
-        
         if(numClients == 0)
         {
             json_decref(nextCommand);
             nextCommand = NULL;
             continue;
         }
-        
+
         task.connOpenDelay = 0;
         
         //fill out the generic task information
