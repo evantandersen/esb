@@ -12,6 +12,7 @@ import mmap
 import sys
 import datetime
 import decimal
+import struct
 from math import log10, floor, fabs
 
 def calculateStatistics(latencyDict):
@@ -103,27 +104,30 @@ def getSystemJiffies():
 
 def getMemoryUsageOfPid(pid):
     memInfo = open("/proc/%d/statm" % pid, "r")
-    result = (float((memInfo.readline().split()[1]))*mmap.PAGESIZE)/1048576
+    result = (float((memInfo.readline().split()[1]))*mmap.PAGESIZE)
     memInfo.close()
     return result
 
-
+def createCryptoKey(n):
+    data = []
+    for i in xrange(0, n):
+        data.append(struct.unpack("q", os.urandom(8))[0])
+    return data
 
 #start of program execution
 parser = OptionParser()
 parser.add_option("-k","--keys", type="int", default=512, help="Specify the number of keys")
 parser.add_option("-c","--clients", type="int", default=1, help="Specify the number of clients")
 parser.add_option("-t","--throughput", type="int", default=32, help="Specify the number of operations per second")
-parser.add_option("-i","--independent-variable", default='k', choices=['c', 'k', 't'])
+parser.add_option("-i","--independent-variable", default='keys', choices=['clients', 'keys', 'throughput'])
 parser.add_option("-n","--num-datapoints", type="int", default=64, help="Specify the number of datapoints")
 parser.add_option("-p", "--pid", help="Use an existing server process", type="int", default=0)
-parser.add_option("-d", "--query-density", help="The range of which queries should scan", type="int", default=10)
 parser.add_option("-s","--server-path", default="./server", help="Filepath of server executable")
 parser.add_option("-o","--output-path", default="", help="Output filepath")
 parser.add_option("--raw-output", action="store_true", help="Save the raw data to files (ignored on eecg distribution)", default=True)
 
 (options, args) = parser.parse_args()
-
+ 
 #find our local IP
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 4912))
@@ -135,11 +139,11 @@ pid = options.pid
 if pid == 0:
     #create a config file
     config = open("esb_test.config", "w")
-    config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test col1:int, col2:int\nconcurrency 1\n")
+    config.write("server_host 0.0.0.0\nserver_port 3940\nusername admin\npassword xxxnq.BMCifhU\ntable test\nconcurrency 1\n")
     config.close()
 
     #start the server
-    process = subprocess.Popen([options.server_path, "esb-test.config"])
+    process = subprocess.Popen([options.server_path, "esb_test.config"])
     pid = process.pid;
     print "Server spawned on pid: %d" % pid
 
@@ -153,6 +157,7 @@ if len(args) > 256:
     print "Number of slaves can not exceed 256"
     exit(-1)
 
+
 #start a new slave if none are listed
 if len(args) == 0:
     slaveProc = subprocess.Popen(["../slave/esb-slave"])
@@ -164,6 +169,8 @@ if len(args) == 0:
 
     #give the slave time to setup
     time.sleep(0.2)
+    
+    args.append(hostIP)
     
 numSlaves = 0
 slaves = []
@@ -177,12 +184,22 @@ for slave in args:
 #send the initial details
 i = 0;
 for slave in slaves:
-    init = {"command":"init","address":hostIP, "port":3940, "slave-id":i, "username":"admin", "password":"dog4sale", "table":"test", "query-density":options.query_density}
+    init = {
+        "command":"init",
+        "address":hostIP, 
+        "port":3940, 
+        "slave-id":i, 
+        "username":"admin", 
+        "password":"dog4sale", 
+        "table":"test", 
+        "keySecret":createCryptoKey(2), 
+        "valueSecret":createCryptoKey(2)
+    }
     slave.sendall(createPacket(init))
     i += 1
 
 #client and throughput tests have the keys inserted at the start
-if options.independent_variable == 'c' or options.independent_variable == 't':
+if options.independent_variable == 'clients' or options.independent_variable == 'throughput':
     i = 0;
     for slave in slaves:
         command = {"command":"add","num-clients":splitNWays(options.clients, numSlaves, i), "amount":splitNWays(options.keys, numSlaves, i),"throughput":0}
@@ -198,17 +215,17 @@ dataPointCount = 0
 ivar_filename = ''
 ivar_title = ''
 
-if options.independent_variable == 'c':
+if options.independent_variable == 'clients':
     dataPointCount = min(options.clients, options.num_datapoints)
     ivar_filename = "clients"
     ivar_title = "Concurrent Clients"
 
-if options.independent_variable == 'k':
+if options.independent_variable == 'keys':
     dataPointCount = min(options.keys, options.num_datapoints)
     ivar_filename = "keys"
     ivar_title = "Number of Keys"
 
-if options.independent_variable == 't':
+if options.independent_variable == 'throughput':
     dataPointCount = min(options.throughput, options.num_datapoints)
     ivar_filename = "IOPs"
     ivar_title = "Requested Throughput (IOPs/s)"
@@ -224,7 +241,7 @@ cpuResults = []
 temp = 0
 for i in xrange(1, dataPointCount + 1):
 
-    if options.independent_variable == 'k':
+    if options.independent_variable == 'keys':
         numKeys = splitNWays(options.keys, dataPointCount, i)
         temp += numKeys
         ivar.append(temp)
@@ -239,12 +256,12 @@ for i in xrange(1, dataPointCount + 1):
             readPacket(slave)
 
     numClients = options.clients
-    if options.independent_variable == 'c':
+    if options.independent_variable == 'clients':
         numClients = (options.clients/dataPointCount)*i
         ivar.append(numClients)
 
     throughput = options.throughput
-    if options.independent_variable == 't':
+    if options.independent_variable == 'throughput':
         throughput = i*(options.throughput/dataPointCount)
         ivar.append(throughput)
 
@@ -257,7 +274,7 @@ for i in xrange(1, dataPointCount + 1):
     
     j = 0
     for slave in slaves:
-        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"workload":[0.8, 0.95],"throughput":splitNWays(throughput, numSlaves, j)}
+        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"throughput":splitNWays(throughput, numSlaves, j)}
         slave.sendall(createPacket(command))
         j += 1
 
@@ -285,6 +302,12 @@ for i in xrange(1, dataPointCount + 1):
         percentDone = newPercent
         print "%d%%" % percentDone,
         sys.stdout.flush()
+
+#close the connections to the slaves
+for slave in slaves:
+    command = {"command":"quit"}
+    slave.sendall(createPacket(command))
+    slave.close()
 
 #create a folder for results
 outputFilePath = os.path.join(options.output_path, datetime.datetime.now().strftime("%Y-%m-%d %H.%M"))
@@ -320,13 +343,9 @@ for item in latencyResults:
     i += 1
 file.close()
 
-#close the connections to the slaves
-for slave in slaves:
-    command = {"command":"quit"}
-    slave.sendall(createPacket(command))
-    slave.close()
-
-
+#create the graphs with gnuplot
+os.chdir(outputFilePath)
+subprocess.call(["gnuplot", "-e", "filename='%s'; xtitle='%s' " % (ivar_filename, ivar_title), "../gnuplot.txt"])
 
 
 

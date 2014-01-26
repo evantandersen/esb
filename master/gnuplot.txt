@@ -1,0 +1,40 @@
+#script for gnuplot
+
+#render to png files - cairo option makes them look nice
+set term pngcairo
+
+#use engineering notation with no significant digits
+#ie "10k" and "2M"
+set format x "%.0s%c"
+
+#turn off the legend
+set nokey
+
+#the xaxis title
+set xlabel xtitle
+
+#======== CPU Graph =====================
+set yrange[0:100]
+set ylabel "CPU Utilization (%)"
+set output "cpu_vs_".filename.".png"
+plot "cpu_vs_".filename.".txt" with lines
+
+
+#======== Latency Graph =================
+set autoscale ymax
+set ylabel "Latency (ms)"
+set output "latency_vs_".filename.".png"
+plot "latency_vs_".filename.".txt" using 1:2 with lines linetype 1, "" using 1:2:3 with errorbars linetype 1
+
+#======== Mem Graph =====================
+set ylabel "Memory"
+set format y "%.0s%cB"
+set output "mem_vs_".filename.".png"
+plot "mem_vs_".filename.".txt" with lines
+
+#======== IOPs Graph ====================
+
+set ylabel "Throughput (IOP/s)"
+set format y "%.0s%c"
+set output "IOPs_vs_".filename.".png"
+plot "IOPs_vs_".filename.".txt" with lines

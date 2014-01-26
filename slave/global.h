@@ -13,8 +13,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/time.h>
+#include <openssl/x509.h>
+#include <openssl/hmac.h>
+
 #include "storage_protocol.h"
-#include "md5.h"
 
 
 void* __xmalloc(size_t size);
@@ -22,7 +24,7 @@ void* __xrealloc(void* pointer, size_t size);
 
 uint64_t timeElapsed(struct timeval* start);
 int64_t uSElapsed(struct timeval* start);
-void hashInt64(uint64_t input, char* output);
+void stringGen(uint64_t key_index, uint64_t secret[2], char *out, size_t out_len);
 const char* ece297strerror(int error);
 
 

@@ -222,6 +222,18 @@ int compareTimes(const struct timeval* a, const struct timeval* b)
 }
 
 
+int loadSecret(uint64_t *secret, json_t *array) {
+    if(!(json_is_array(array) && json_array_size(array) == 2))
+    {
+        return -1;
+    }
+    for(int i = 0; i < 2; i++)
+    {
+        secret[i] = json_number_value(json_array_get(array, i));
+    }
+	return 0;
+}
+
 int beginSlavery(int fd)
 {
     uint16_t randContext[3];
@@ -257,23 +269,44 @@ int beginSlavery(int fd)
     const char* password;
     const char* tableName;
     int port;
-    int64_t temp;
-    int result = json_unpack(params, "{s:s, s:s, s:i, s:I, s:s, s:s, s:s, s:I}",
+	uint64_t slaveID;
+    int result = json_unpack(params, "{s:s, s:s, s:i, s:I, s:s, s:s, s:s}",
                              "command",         &command,
                              "address",         &address,
                              "port",            &port,
+							 "slave-id",		&slaveID,
                              "username",        &username,
                              "password",        &password,
-                             "table",           &tableName,
-                             "query-density",   &temp);
-    if(result != 0 || strcmp(command, "init") || port <= 0 || port > 65535 || temp < 0 || temp > UINT32_MAX)
+                             "table",           &tableName
+                              );
+    if(result != 0 || strcmp(command, "init") || port <= 0 || port > 65535)
     {
         fprintf(stderr, "Invalid initialization packet recieved\n");
         goto exit;
     }
-
-    uint32_t queryDensity = temp;
-    
+    json_t* key_secret = json_object_get(params, "keySecret");
+    json_t* value_secret = json_object_get(params, "valueSecret");
+	if(!key_secret || !value_secret) {
+        fprintf(stderr, "Invalid initialization packet recieved\n");
+		goto exit;
+	}
+	uint64_t keySecret[2];
+	result = loadSecret(keySecret, key_secret);
+	if(result) {
+        fprintf(stderr, "Invalid initialization packet recieved\n");
+		goto exit;
+	}
+	uint64_t valueSecret[2];
+	result = loadSecret(valueSecret, value_secret);
+	if(result) {
+        fprintf(stderr, "Invalid initialization packet recieved\n");
+		goto exit;
+	}
+		
+    slaveID <<= 48;
+	
+	
+	
     uint32_t numKeys = 0;
     
     //loop and execute commands from the master
@@ -310,37 +343,8 @@ int beginSlavery(int fd)
             task.type = kClientAddKeys;
             numKeys += task.numKeys;
         }
-        else if(!strcmp(command, "remove"))
-        {
-            uint64_t numKeysToRemove;
-            
-            int result = json_unpack(nextCommand, "{s:I}", "amount", &numKeysToRemove);
-            if(result == -1)
-            {
-                goto exit;
-            }
-            
-            if(numKeysToRemove > numKeys)
-            {
-                goto exit;
-            }
-            task.startingKey = slaveID + numKeys - numKeysToRemove;
-            task.numKeys = numKeysToRemove;
-            task.type = kClientRemoveKeys;
-            numKeys -= numKeysToRemove;
-        }
         else if(!strcmp(command, "test"))
         {
-            json_t* array = json_object_get(nextCommand, "workload");
-
-            if(!(json_is_array(array) && json_array_size(array) == kWorkloadTypes))
-            {
-                goto exit;
-            }
-            for(int i = 0; i < kWorkloadTypes; i++)
-            {
-                task.workloadComposition[i] = json_number_value(json_array_get(array, i));
-            }
             int result = json_unpack(nextCommand, "{s:I}", "amount", &task.count);
             if(result == -1)
             {
@@ -384,7 +388,8 @@ int beginSlavery(int fd)
         task.username = username;
         task.password = password;
         task.port = port;
-        task.queryDensity = queryDensity;
+		task.keySecret = keySecret;
+		task.valueSecret = valueSecret;
         
         //split the request between the clients
         while(numClients >= connPoolSize)
