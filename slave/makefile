@@ -5,7 +5,7 @@
 # esb slave
 
 
-OBJECTS = global.o main.o md5.o network.o slave.o tester.o
+OBJECTS = global.o main.o network.o slave.o tester.o
 
 default: $(OBJECTS)
 	gcc $(OBJECTS) -lcrypto -lm -lpthread  -g -Os -std=gnu99 -o esb-slave libstorage.a libjansson.a -lcrypt
