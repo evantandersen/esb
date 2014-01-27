@@ -8,7 +8,7 @@
 OBJECTS = global.o main.o network.o slave.o tester.o
 
 default: $(OBJECTS)
-	gcc $(OBJECTS) -lcrypto -lm -lpthread  -g -Os -std=gnu99 -o esb-slave libstorage.a libjansson.a -lcrypt
+	gcc $(OBJECTS) -lcrypto -lm -lpthread  -g -Os -std=gnu99 -o esb-slave ../../src/libstorage.a libjansson.a -lcrypt
 
 %.o : %.c
 	gcc -std=gnu99 -c -O2 -g $<

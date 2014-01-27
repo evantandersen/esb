@@ -122,7 +122,7 @@ parser.add_option("-t","--throughput", type="int", default=32, help="Specify the
 parser.add_option("-i","--independent-variable", default='keys', choices=['clients', 'keys', 'throughput'])
 parser.add_option("-n","--num-datapoints", type="int", default=64, help="Specify the number of datapoints")
 parser.add_option("-p", "--pid", help="Use an existing server process", type="int", default=0)
-parser.add_option("-s","--server-path", default="./server", help="Filepath of server executable")
+parser.add_option("-s","--server-path", default="../../src/server", help="Filepath of server executable")
 parser.add_option("-o","--output-path", default="", help="Output filepath")
 parser.add_option("--raw-output", action="store_true", help="Save the raw data to files (ignored on eecg distribution)", default=True)
 
