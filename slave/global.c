@@ -120,7 +120,7 @@ void hmac_sha256(const unsigned char *text, size_t text_len, const unsigned char
 void stringGen(uint64_t key_index, uint64_t *secret, char *out, size_t out_len) 
 {
 	unsigned char digest[32];
-	hmac_sha256(&key_index, sizeof(key_index), secret, sizeof(secret), digest);
+	hmac_sha256((unsigned char*)&key_index, sizeof(key_index), (unsigned char*)secret, sizeof(secret), digest);
 	
 	if(out_len > 65) {
 		out_len = 65;
