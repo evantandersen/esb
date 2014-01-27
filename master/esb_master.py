@@ -128,6 +128,11 @@ parser.add_option("--raw-output", action="store_true", help="Save the raw data t
 
 (options, args) = parser.parse_args()
  
+#rebuild the slave
+result = subprocess.call(["make", "-C", "../slave/"])
+if result != 0:
+    exit()
+ 
 #find our local IP
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 4912))
