@@ -18,6 +18,7 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
  - [Throughput: Actual vs Requested](http://i.imgur.com/pCI7Kwg.png)
  - [Memory vs Number of Keys](http://i.imgur.com/2jldbT9.png)
  - [Throughput vs Number of Keys](http://i.imgur.com/wcO4o3p.png)
+ - [Latency vs Throughput](http://i.imgur.com/neWhbqi.png)
 
 **How To Use**
 
