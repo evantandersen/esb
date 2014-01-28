@@ -1,7 +1,7 @@
 #script for gnuplot
 
 #render to png files - cairo option makes them look nice
-set term pngcairo
+set term pngcairo size 1024,768
 
 #use engineering notation with no significant digits
 #ie "10k" and "2M"
