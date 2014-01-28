@@ -105,8 +105,14 @@ const char* testClient(void* parameters)
                                 
             case kClientRunWorkload:
             {
-                uint64_t keyIndex = (erand48(randContext) * worker->numKeys) + worker->startingKey;
-                
+				double value = erand48(randContext);
+                uint64_t keyIndex = (value * worker->numKeys);
+				if(keyIndex == worker->numKeys) {
+					printf("Error - erand48 returned %f, %f * %ld = %ld!\n", value, value, worker->numKeys, keyIndex);
+				}
+				
+				keyIndex += worker->startingKey;
+                				
                 char keyBuf[20]; //as per ECE297 spec
 				stringGen(keyIndex, worker->keySecret, keyBuf, sizeof(keyBuf));
                 char expectedValue[1024];
