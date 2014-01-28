@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 from optparse import OptionParser
 import socket
 import json
@@ -296,7 +298,7 @@ for i in xrange(1, dataPointCount + 1):
     latencyResults.append(calculateStatistics(latency))
 
     #calculate the throughput
-    throughputResults.append((amount * numSlaves)/(time.time() - start))
+    throughputResults.append(amount/(time.time() - start))
 
     #CPU usage
     cpuResults.append(((getJiffies(pid) - startServJiffies)/float(getSystemJiffies() - startSysJiffies)) * 100)
