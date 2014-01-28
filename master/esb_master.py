@@ -175,6 +175,7 @@ if len(args) == 0:
     #give the slave time to setup
     time.sleep(0.2)
     
+    #pretend we passed it in on the cmd line
     args.append(hostIP)
     
 numSlaves = 0
@@ -281,7 +282,7 @@ for i in xrange(1, dataPointCount + 1):
     
     j = 0
     for slave in slaves:
-        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":amount,"throughput":splitNWays(throughput, numSlaves, j)}
+        command = {"command":"test","num-clients":splitNWays(numClients, numSlaves, j),"amount":splitNWays(amount, numSlaves, j),"throughput":splitNWays(throughput, numSlaves, j)}
         slave.sendall(createPacket(command))
         j += 1
 
@@ -324,11 +325,14 @@ os.mkdir(outputFilePath)
 configFile = open(os.path.join(outputFilePath, "config.txt"), "w")
 configFile.write("#\n# esb tests performed at %s\n" % datetime.datetime.now().strftime("%R on %A, %B %e"))
 configFile.write("#\n")
-configFile.write("# Configuration Settings:\n")
+configFile.write("# Settings:\n")
 configFile.write("#    clients:%d\n" % options.clients)
 configFile.write("#    keys:%d\n" % options.keys)
 configFile.write("#    throughput:%d\n" % options.throughput)
 configFile.write("#    data points:%d\n" % dataPointCount)
+configFile.write("#\n")
+configFile.write("# Environment\n")
+configFile.write("#    Number of Slaves:%d\n" % numSlaves)
 configFile.write("#\n")
 configFile.write("# Independent Variable:\n")
 configFile.write("#    %s\n" % ivar_filename)
