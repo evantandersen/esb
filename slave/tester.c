@@ -105,7 +105,7 @@ const char* testClient(void* parameters)
                                 
             case kClientRunWorkload:
             {
-                uint32_t keyIndex = (erand48(randContext) * worker->numKeys) + worker->startingKey;
+                uint64_t keyIndex = (erand48(randContext) * worker->numKeys) + worker->startingKey;
                 
                 char keyBuf[20]; //as per ECE297 spec
 				stringGen(keyIndex, worker->keySecret, keyBuf, sizeof(keyBuf));
