@@ -117,7 +117,7 @@ const char* testClient(void* parameters)
                 struct storage_record rec;
                 if(storage_get(worker->table, keyBuf, &rec, worker->conn) == -1)
                 {
-                    printf("storage_get failed\n");
+                    printf("storage_get failed (key index = %u)\n", keyIndex);
                     return ece297strerror(errno);
                 }
                 if(strcmp(rec.value, expectedValue)) {

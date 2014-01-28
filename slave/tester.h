@@ -30,7 +30,7 @@ struct workerTask
     uint8_t type;
     uint16_t port;
     uint32_t connOpenDelay;
-    uint32_t workerID;
+    uint64_t workerID;
     uint64_t count;
     uint64_t* latencyResults;
     uint64_t startingKey;
