@@ -34,7 +34,7 @@ plot "mem_vs_".filename.".txt" with lines
 
 #======== IOPs Graph ====================
 
-set ylabel "Throughput (IOP/s)"
+set ylabel "Throughput (IOPs)"
 set format y "%.1s%c"
 set output "IOPs_vs_".filename.".png"
 plot "IOPs_vs_".filename.".txt" with lines
