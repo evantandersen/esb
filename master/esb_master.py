@@ -233,7 +233,7 @@ if options.independent_variable == 'keys':
 if options.independent_variable == 'throughput':
     dataPointCount = min(options.throughput, options.num_datapoints)
     ivar_filename = "IOPs"
-    ivar_title = "Requested Throughput (IOPs/s)"
+    ivar_title = "Requested Throughput (IOPs)"
 
 percentDone = 0
 

@@ -15,10 +15,10 @@ The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmar
  - CPU Usage
 
 **Screenshots**
- - [CPU Utilization vs Concurrent Clients](http://i.imgur.com/frS7wFq.png)
- - [Memory vs Concurrent Clients](http://i.imgur.com/G9GENpZ.png)
- - [Throughput vs Number of Keys](http://i.imgur.com/gnfyEiZ.png)
- - [Latency vs Number of Keys](http://i.imgur.com/JG8L38z.png)
+ - [Throughput: Actual vs Requested](http://i.imgur.com/pCI7Kwg.png)
+ - [Memory vs Number of Keys](http://i.imgur.com/2jldbT9.png)
+ - [Throughput vs Number of Keys](http://i.imgur.com/wcO4o3p.png)
+ - [Latency vs Throughput](http://i.imgur.com/neWhbqi.png)
 
 **How To Use**
 

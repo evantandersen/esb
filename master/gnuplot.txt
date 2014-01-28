@@ -1,7 +1,7 @@
 #script for gnuplot
 
 #render to png files - cairo option makes them look nice
-set term pngcairo
+set term pngcairo size 1024,768
 
 #use engineering notation with no significant digits
 #ie "10k" and "2M"
@@ -34,7 +34,7 @@ plot "mem_vs_".filename.".txt" with lines
 
 #======== IOPs Graph ====================
 
-set ylabel "Throughput (IOP/s)"
-set format y "%s%c"
+set ylabel "Throughput (IOPs)"
+set format y "%.1s%c"
 set output "IOPs_vs_".filename.".png"
 plot "IOPs_vs_".filename.".txt" with lines
