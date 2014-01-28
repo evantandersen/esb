@@ -187,6 +187,8 @@ for slave in args:
 
 
 #send the initial details
+keySecret = createCryptoKey(2)
+valueSecret = createCryptoKey(2)
 i = 0;
 for slave in slaves:
     init = {
@@ -197,8 +199,8 @@ for slave in slaves:
         "username":"admin", 
         "password":"dog4sale", 
         "table":"test", 
-        "keySecret":createCryptoKey(2), 
-        "valueSecret":createCryptoKey(2)
+        "keySecret":keySecret, 
+        "valueSecret":valueSecret
     }
     slave.sendall(createPacket(init))
     i += 1
