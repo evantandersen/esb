@@ -39,12 +39,10 @@ void* __xrealloc(void* pointer, size_t size)
 }
 
 
-//return the number of 100uS ticks
+//return the number of 10uS ticks
 uint64_t timeElapsed(struct timeval* start)
 {
-    struct timeval end;
-    gettimeofday(&end, NULL);
-    return (end.tv_sec - start->tv_sec) * 10000  + (end.tv_usec - start->tv_usec)/100;
+    return uSElapsed(start)/10;
 }
 
 int64_t uSElapsed(struct timeval* start)

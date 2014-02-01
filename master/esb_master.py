@@ -37,8 +37,8 @@ def calculateStatistics(latencyDict):
 
         if temp > highGoal and high == -1:
             high = key
-        
-    return {"mean":total/(float(count)*10.0), "low":float(low)/10, "high":float(high)/10}
+    tickResolution = 100 #number of ticks in 1ms
+    return {"mean":total/(float(count)*tickResolution), "low":float(low)/tickResolution, "high":float(high)/tickResolution}
 
 def writeDataToFile(path, x, y, xshort, yshort):
     file = open(os.path.join(path, ("%s_vs_%s.txt" % (yshort, xshort))), "w")
