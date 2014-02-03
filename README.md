@@ -1,7 +1,7 @@
 esb
 ===
 
-The ECE297 Server Benchmark faclilitates quick and accurate distributed benchmarking. esb isolates a single variable and measures it's effect on server performance. It currently supports: 
+The ECE297 Server Benchmark facilitates quick and accurate distributed benchmarking. esb isolates a single variable and measures its effect on server performance. It currently supports: 
 
 **Indepdent Variables**
  - Number of active keys
